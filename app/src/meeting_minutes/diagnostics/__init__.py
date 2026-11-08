@@ -1,0 +1,1 @@
+"""Content-free local diagnostics."""

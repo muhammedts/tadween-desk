@@ -1,0 +1,172 @@
+/* Tadween Desk — Qt style sheet TEMPLATE (the Quiet Desk base rules, then app-specific rules at the end).
+   Placeholders: {c:token} = colour from tokens.json for the active theme; {z:token} = size in logical px.
+   theme.py substitutes them. Requires QApplication.setStyle("Fusion"). Dynamic properties used as selectors
+   (variant, chip, banner, role, card, readonly, nav, state) must be set BEFORE show, or call
+   widget.style().unpolish(widget); widget.style().polish(widget) after changing them. */
+
+* { outline: 0; }
+QMainWindow, QWidget#Root { background: {c:bg.canvas}; color: {c:text.primary}; }
+QWidget { color: {c:text.primary}; selection-background-color: {c:bg.selectedStrong}; selection-color: {c:text.primary}; }
+QToolTip { background: {c:text.primary}; color: {c:bg.surface}; border: 0; padding: 4px 8px; border-radius: 4px; }
+
+/* ---- typography roles (QLabel[role=...]) ---- */
+QLabel[role="h1"] { font-size: 18pt; font-weight: 600; }
+QLabel[role="h2"] { font-size: 12pt; font-weight: 600; }
+QLabel[role="sub"], QLabel[role="help"] { color: {c:text.secondary}; }
+QLabel[role="help"] { font-size: 9pt; }
+QLabel[role="mono"] { font-family: "Cascadia Mono", "Consolas"; }
+QLabel[role="elapsed"] { font-family: "Cascadia Mono", "Consolas"; font-size: 11.5pt; font-weight: 600; }
+
+/* ---- navigation rail ---- */
+QFrame#NavRail { background: {c:bg.surfaceAlt}; border: 0; border-right: 1px solid {c:border.subtle}; }
+QToolButton[nav="true"] { border: 0; border-radius: 6px; padding: 8px 12px; text-align: left; background: transparent; min-height: {z:nav.itemHeight}px; }
+QToolButton[nav="true"]:hover { background: {c:bg.hover}; }
+QToolButton[nav="true"]:checked { background: {c:bg.selected}; font-weight: 600; border-left: 3px solid {c:accent.bg}; }
+QToolButton[nav="true"]:focus { border: 2px solid {c:focus.ring}; }
+
+/* ---- active meeting bar ---- */
+QFrame#MeetingBar { background: {c:bg.surface}; border: 0; border-bottom: 1px solid {c:border.default}; min-height: {z:meetingBar.height}px; }
+QLabel[state="rec"] { border: 1px solid {c:border.default}; border-radius: 13px; padding: 3px 10px; font-weight: 600; }
+QLabel[state="paused"] { color: {c:status.warning.fg}; background: {c:status.warning.bg}; border: 1px solid {c:status.warning.border}; border-radius: 13px; padding: 3px 10px; font-weight: 600; }
+QLabel[state="finalizing"] { color: {c:status.info.fg}; background: {c:status.info.bg}; border: 1px solid {c:status.info.border}; border-radius: 13px; padding: 3px 10px; font-weight: 600; }
+QLabel[state="blocked"] { color: {c:status.danger.fg}; background: {c:status.danger.bg}; border: 1px solid {c:status.danger.border}; border-radius: 13px; padding: 3px 10px; font-weight: 600; }
+QLabel[micstate="included"] { color: {c:source.mic.fg}; background: {c:source.mic.bg}; border: 1px solid {c:source.mic.border}; border-radius: 6px; padding: 3px 10px; font-weight: 600; }
+QLabel[micstate="excluded"] { color: {c:status.warning.fg}; background: {c:status.warning.bg}; border: 1px solid {c:status.warning.border}; border-radius: 6px; padding: 3px 10px; font-weight: 600; }
+
+/* ---- buttons ---- */
+QPushButton { background: {c:bg.surface}; border: 1px solid {c:border.default}; border-radius: 4px; padding: 0 12px; min-height: {z:control.height}px; font-weight: 600; }
+QPushButton:hover { background: {c:bg.hover}; }
+QPushButton:pressed { background: {c:bg.pressed}; }
+QPushButton:focus { border: 2px solid {c:focus.ring}; }
+QPushButton:disabled { background: {c:bg.sunken}; border-color: {c:border.subtle}; color: {c:text.disabled}; }
+QPushButton[size="large"] { min-height: {z:control.heightLarge}px; padding: 0 16px; }
+QPushButton[size="cta"] { min-height: {z:control.heightPrimaryCta}px; padding: 0 20px; font-size: 11.5pt; }
+QPushButton[variant="primary"] { background: {c:accent.bg}; border-color: {c:accent.bg}; color: {c:text.onAccent}; }
+QPushButton[variant="primary"]:hover { background: {c:accent.bgHover}; }
+QPushButton[variant="primary"]:pressed { background: {c:accent.bgPressed}; }
+QPushButton[variant="primary"]:focus, QPushButton[variant="danger"]:focus { border: 2px solid {c:focus.ringInner}; }
+QPushButton[variant="danger"] { background: {c:status.danger.solid}; border-color: {c:status.danger.solid}; color: {c:text.onDanger}; }
+QPushButton[variant="danger"]:hover { background: {c:status.danger.solidHover}; }
+QPushButton[variant="subtle"] { background: transparent; border-color: transparent; }
+QPushButton[variant="subtle"]:hover { background: {c:bg.hover}; }
+QPushButton[variant="dangerText"] { background: transparent; border-color: transparent; color: {c:status.danger.fg}; }
+QPushButton[variant="primary"]:disabled, QPushButton[variant="danger"]:disabled { background: {c:bg.sunken}; border-color: {c:border.subtle}; color: {c:text.disabled}; }
+
+/* ---- chips (QLabel[chip=...]) ---- */
+QLabel[chip] { border-radius: 4px; padding: 1px 8px; font-size: 9pt; font-weight: 600; border: 1px solid {c:border.default}; }
+QLabel[chip="mic"] { color: {c:source.mic.fg}; background: {c:source.mic.bg}; border-color: {c:source.mic.border}; }
+QLabel[chip="system"] { color: {c:source.system.fg}; background: {c:source.system.bg}; border-color: {c:source.system.border}; }
+QLabel[chip="ok"] { color: {c:status.success.fg}; background: {c:status.success.bg}; border-color: {c:status.success.border}; }
+QLabel[chip="warn"] { color: {c:status.warning.fg}; background: {c:status.warning.bg}; border-color: {c:status.warning.border}; }
+QLabel[chip="bad"] { color: {c:status.danger.fg}; background: {c:status.danger.bg}; border-color: {c:status.danger.border}; }
+QLabel[chip="info"] { color: {c:status.info.fg}; background: {c:status.info.bg}; border-color: {c:status.info.border}; }
+QLabel[chip="neutral"] { color: {c:status.neutral.fg}; background: {c:status.neutral.bg}; border-color: {c:status.neutral.border}; }
+QLabel[chip="draft"] { color: {c:text.secondary}; background: transparent; border: 1px dashed {c:border.strong}; }
+QLabel[chip="readonly"] { color: {c:text.secondary}; background: transparent; font-size: 8pt; }
+
+/* ---- banners (QFrame[banner=...]) ---- */
+QFrame[banner] { border: 0; border-bottom: 1px solid {c:border.subtle}; }
+QFrame[banner="warn"] { background: {c:status.warning.bg}; border-color: {c:status.warning.border}; }
+QFrame[banner="bad"] { background: {c:status.danger.bg}; border-color: {c:status.danger.border}; }
+QFrame[banner="info"] { background: {c:status.info.bg}; border-color: {c:status.info.border}; }
+QFrame[banner="ok"] { background: {c:status.success.bg}; border-color: {c:status.success.border}; }
+QFrame[banner][inline="true"] { border: 1px solid; border-radius: 8px; }
+QFrame[banner] QLabel { background: transparent; }
+
+/* ---- cards, read-only blocks ---- */
+QFrame[card="true"] { background: {c:bg.surface}; border: 1px solid {c:border.subtle}; border-radius: 8px; }
+QFrame[readonly="true"] { background: {c:bg.sunken}; border: 0; border-radius: 6px; }
+QFrame[readonly="true"] QLabel { background: transparent; }
+QFrame#SidePanel { background: {c:bg.surfaceAlt}; border: 0; border-left: 1px solid {c:border.subtle}; }
+QFrame#Toolbar { background: {c:bg.surface}; border: 0; border-top: 1px solid {c:border.subtle}; }
+
+/* ---- inputs ---- */
+QLineEdit, QComboBox, QPlainTextEdit, QTextEdit, QKeySequenceEdit, QDateEdit, QSpinBox { background: {c:bg.surface}; border: 1px solid {c:border.strong}; border-radius: 4px; padding: 4px 8px; min-height: 22px; }
+QLineEdit:hover, QComboBox:hover, QPlainTextEdit:hover { border-color: {c:text.secondary}; }
+QLineEdit:focus, QComboBox:focus, QPlainTextEdit:focus, QTextEdit:focus, QDateEdit:focus { border: 2px solid {c:focus.ring}; padding: 3px 7px; }
+QLineEdit:read-only, QPlainTextEdit[readOnly="true"] { background: {c:bg.sunken}; border-color: {c:border.subtle}; }
+QLineEdit[invalid="true"] { border: 2px solid {c:status.danger.fg}; }
+QLineEdit:disabled, QComboBox:disabled { color: {c:text.disabled}; background: {c:bg.sunken}; border-color: {c:border.subtle}; }
+QComboBox QAbstractItemView { background: {c:bg.surface}; border: 1px solid {c:border.default}; selection-background-color: {c:bg.selected}; }
+QCheckBox, QRadioButton { spacing: 10px; }
+QCheckBox::indicator, QRadioButton::indicator { width: 16px; height: 16px; }
+QCheckBox:focus, QRadioButton:focus { color: {c:text.primary}; }
+
+/* ---- transcript & lists ---- */
+QListView#Transcript, QListWidget#Transcript { background: {c:bg.surface}; border: 0; border-top: 1px solid {c:border.subtle}; }
+QListView#Transcript:focus { border: 2px solid {c:focus.ring}; }
+QListView#MeetingList { background: {c:bg.surface}; border: 1px solid {c:border.subtle}; border-radius: 8px; }
+QListView#MeetingList::item { padding: 10px 16px; border-bottom: 1px solid {c:border.subtle}; }
+QListView#MeetingList::item:hover { background: {c:bg.surfaceAlt}; }
+QListView#MeetingList::item:selected { background: {c:bg.selected}; color: {c:text.primary}; }
+QTableView { background: {c:bg.surface}; gridline-color: {c:border.subtle}; border: 0; }
+QHeaderView::section { background: {c:bg.surfaceAlt}; color: {c:text.secondary}; border: 0; border-bottom: 1px solid {c:border.default}; padding: 6px 8px; font-weight: 600; }
+
+/* ---- tabs (meeting workspace) ---- */
+QTabBar::tab { background: transparent; border: 0; border-bottom: 3px solid transparent; padding: 8px 14px; color: {c:text.secondary}; font-weight: 600; }
+QTabBar::tab:selected { color: {c:text.primary}; border-bottom-color: {c:accent.bg}; }
+QTabBar::tab:hover { color: {c:text.primary}; }
+QTabWidget::pane { border: 0; }
+
+/* ---- progress & meters ---- */
+QProgressBar { background: {c:meter.track}; border: 0; border-radius: 2px; max-height: 4px; text-align: center; }
+QProgressBar::chunk { background: {c:accent.bg}; border-radius: 2px; }
+QProgressBar[meter="true"] { max-height: 6px; border-radius: 3px; }
+QProgressBar[meter="true"]::chunk { background: {c:meter.fill}; border-radius: 3px; }
+QProgressBar[meter="excluded"]::chunk { background: {c:meter.excluded}; }
+
+/* ---- scroll bars ---- */
+QScrollArea { border: 0; background: transparent; }
+QScrollBar:vertical { background: transparent; width: 12px; margin: 0; }
+QScrollBar::handle:vertical { background: {c:scrollbar.thumb}; border-radius: 4px; min-height: 32px; margin: 2px; }
+QScrollBar:horizontal { background: transparent; height: 12px; }
+QScrollBar::handle:horizontal { background: {c:scrollbar.thumb}; border-radius: 4px; min-width: 32px; margin: 2px; }
+QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }
+
+/* ---- dialogs ---- */
+QDialog { background: {c:bg.surface}; }
+QFrame#DialogFooter { background: {c:bg.surfaceAlt}; border: 0; border-top: 1px solid {c:border.subtle}; }
+QMessageBox QLabel { min-width: 360px; }
+
+/* ---- app-specific rules ---- */
+QWidget#Page, QWidget#PageBody { background: {c:bg.canvas}; }
+QScrollArea > QWidget > QWidget#PageBody { background: {c:bg.canvas}; }
+QLabel[role="h1"][short="true"] { font-size: 13pt; }
+QLabel[role="title"] { font-size: 15pt; font-weight: 600; }
+QLabel[role="title"][short="true"] { font-size: 12pt; }
+QLabel[role="strong"] { font-weight: 600; }
+QLabel[role="tertiary"] { color: {c:text.tertiary}; }
+QLabel[role="danger"] { color: {c:status.danger.fg}; }
+QLabel[role="ok"] { color: {c:status.success.fg}; }
+QLabel[role="warn"] { color: {c:status.warning.fg}; font-weight: 600; }
+QLabel[state="saving"] { color: {c:status.info.fg}; background: {c:status.info.bg}; border: 1px solid {c:status.info.border}; border-radius: 13px; padding: 3px 10px; font-weight: 600; }
+QLabel[micstate="none"] { color: {c:status.neutral.fg}; background: {c:status.neutral.bg}; border: 1px solid {c:status.neutral.border}; border-radius: 6px; padding: 3px 10px; font-weight: 600; }
+QLabel[chip="badsolid"] { color: {c:text.onDanger}; background: {c:status.danger.solid}; border-color: {c:status.danger.solid}; }
+QPushButton[size="compact"] { min-height: 30px; padding: 0 10px; }
+QPushButton[blocked="true"], QPushButton[blocked="true"]:hover { background: {c:bg.sunken}; border-color: {c:border.default}; color: {c:text.secondary}; }
+QToolButton[nav="true"][compact="true"] { padding: 4px 2px; font-size: 8.5pt; min-height: 52px; }
+QToolButton[toolbar="true"] { border: 1px solid transparent; border-radius: 4px; padding: 4px 10px; min-height: 28px; font-weight: 600; background: transparent; }
+QToolButton[toolbar="true"]:hover { background: {c:bg.hover}; }
+QToolButton[toolbar="true"]:pressed, QToolButton[toolbar="true"]:checked { background: {c:bg.selected}; }
+QToolButton[toolbar="true"]:focus { border: 2px solid {c:focus.ring}; }
+QToolButton[toolbar="true"]:disabled { color: {c:text.disabled}; }
+QToolButton[variant="dangerText"] { color: {c:status.danger.fg}; }
+QToolButton[link="true"] { border: 0; background: transparent; color: {c:accent.text}; text-decoration: underline; padding: 2px 0; font-weight: 400; }
+QToolButton[link="true"]:focus { border: 2px solid {c:focus.ring}; }
+QToolButton[dismiss="true"], QToolButton[details="true"] { border: 1px solid transparent; background: transparent; padding: 2px 4px; border-radius: 4px; }
+QToolButton[dismiss="true"]:focus, QToolButton[details="true"]:focus { border: 2px solid {c:focus.ring}; }
+QToolButton[details="true"] { color: {c:text.secondary}; }
+QLabel#Toast { background: {c:text.primary}; color: {c:bg.surface}; border-radius: 16px; padding: 8px 16px; font-weight: 600; }
+QFrame#Header { background: {c:bg.canvas}; border: 0; }
+QFrame#Toolbar { border-bottom: 1px solid {c:border.subtle}; }
+QFrame#StatusList { background: {c:bg.surface}; border: 1px solid {c:border.subtle}; border-radius: 8px; }
+QFrame#NavFooter QLabel { color: {c:text.secondary}; font-size: 9pt; }
+QListView#SearchResults, QListView#MeetingList, QListView#Timeline { background: {c:bg.surface}; border: 1px solid {c:border.subtle}; border-radius: 8px; }
+QListView#Timeline { background: transparent; border: 0; }
+QListView#Toc { background: transparent; border: 0; }
+QListView#Toc::item { padding: 6px 10px; border-radius: 6px; }
+QListView#Toc::item:selected { background: {c:bg.selected}; color: {c:text.primary}; }
+QListView#Transcript:focus, QListView#SearchResults:focus, QListView#MeetingList:focus { border: 2px solid {c:focus.ring}; }
+QTabBar { qproperty-drawBase: 0; }
+QPlainTextEdit[readOnly="true"] { background: {c:bg.sunken}; border: 0; border-radius: 6px; }
+QSplitter::handle { background: {c:border.subtle}; }

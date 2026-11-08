@@ -1,0 +1,354 @@
+{
+  "manifest_version": 1,
+  "models": [
+    {
+      "id": "qwen3-asr-0.6b-q8_0-gguf",
+      "role": "stt",
+      "engine": "llama.cpp",
+      "engine_version": "b11960",
+      "upstream_checkpoint": "Qwen/Qwen3-ASR-0.6B",
+      "source_revision": "huggingface.co/ggml-org/Qwen3-ASR-0.6B-GGUF@928ab958557df9aa2ef1c93e0e83c7ad0933fae2",
+      "conversion_revision": "huggingface.co/ggml-org/Qwen3-ASR-0.6B-GGUF@928ab958557df9aa2ef1c93e0e83c7ad0933fae2 (Q8_0 GGUF and its audio projector)",
+      "languages": [
+        "en",
+        "ar"
+      ],
+      "task": "transcribe",
+      "install_subdir": "stt/qwen3-asr-0.6b-q8",
+      "files": [
+        {
+          "role": "model",
+          "basename": "Qwen3-ASR-0.6B-Q8_0.gguf",
+          "source_url": "https://huggingface.co/ggml-org/Qwen3-ASR-0.6B-GGUF/resolve/928ab958557df9aa2ef1c93e0e83c7ad0933fae2/Qwen3-ASR-0.6B-Q8_0.gguf",
+          "revision": "928ab958557df9aa2ef1c93e0e83c7ad0933fae2",
+          "sha256": "bca259818b50ca7c4c05e9bdb35a5dc04fa039653a6d6f3f0f331f96f6aa1971",
+          "bytes": 804749248
+        },
+        {
+          "role": "mmproj",
+          "basename": "mmproj-Qwen3-ASR-0.6B-Q8_0.gguf",
+          "source_url": "https://huggingface.co/ggml-org/Qwen3-ASR-0.6B-GGUF/resolve/928ab958557df9aa2ef1c93e0e83c7ad0933fae2/mmproj-Qwen3-ASR-0.6B-Q8_0.gguf",
+          "revision": "928ab958557df9aa2ef1c93e0e83c7ad0933fae2",
+          "sha256": "41a342b5e4c514e968cb756de6cd1b7be39eff43c44c57a2ef5fc6522e36603d",
+          "bytes": 214392480
+        }
+      ],
+      "licence_files": [],
+      "verified_total_bytes": 1019141728,
+      "status": "unresolved-not-shippable",
+      "notes": "Default speech recognizer. Served on 127.0.0.1 by the stt-runtime entry's llama-server, which the app starts and stops itself. Install with \"Install Models.cmd\"; before the speech server first starts in a session the app checks each file's size and SHA-256, and it never downloads anything. Upstream model card licence Apache-2.0 (Qwen/Qwen3-ASR-0.6B); the GGUF repository has no licence file, so the Apache-2.0 text is bundled with the app (licences/Qwen3-ASR-Apache-2.0-LICENSE.txt). The status stays unresolved-not-shippable because licence_files is empty for the weights themselves."
+    },
+    {
+      "id": "qwen3-asr-1.7b-q8_0-gguf",
+      "role": "stt-alt",
+      "engine": "llama.cpp",
+      "engine_version": "b11960",
+      "upstream_checkpoint": "Qwen/Qwen3-ASR-1.7B",
+      "source_revision": "huggingface.co/ggml-org/Qwen3-ASR-1.7B-GGUF@36a678687ba7d07a74ca70ccb0e36902e005fb80",
+      "conversion_revision": "huggingface.co/ggml-org/Qwen3-ASR-1.7B-GGUF@36a678687ba7d07a74ca70ccb0e36902e005fb80 (Q8_0 GGUF and its audio projector)",
+      "languages": [
+        "en",
+        "ar"
+      ],
+      "task": "transcribe",
+      "install_subdir": "stt/qwen3-asr-1.7b-q8",
+      "files": [
+        {
+          "role": "model",
+          "basename": "Qwen3-ASR-1.7B-Q8_0.gguf",
+          "source_url": "https://huggingface.co/ggml-org/Qwen3-ASR-1.7B-GGUF/resolve/36a678687ba7d07a74ca70ccb0e36902e005fb80/Qwen3-ASR-1.7B-Q8_0.gguf",
+          "revision": "36a678687ba7d07a74ca70ccb0e36902e005fb80",
+          "sha256": "58e22d0532d4eacaf034cfac17a6fed159f37c41390c710186783be439d1fc57",
+          "bytes": 2165034944
+        },
+        {
+          "role": "mmproj",
+          "basename": "mmproj-Qwen3-ASR-1.7B-Q8_0.gguf",
+          "source_url": "https://huggingface.co/ggml-org/Qwen3-ASR-1.7B-GGUF/resolve/36a678687ba7d07a74ca70ccb0e36902e005fb80/mmproj-Qwen3-ASR-1.7B-Q8_0.gguf",
+          "revision": "36a678687ba7d07a74ca70ccb0e36902e005fb80",
+          "sha256": "46c1d533af3f354ceb37ce855dbceff7da7fa7cf1e6a523df3b13440bd164c0d",
+          "bytes": 355709344
+        }
+      ],
+      "licence_files": [],
+      "verified_total_bytes": 2520744288,
+      "status": "unresolved-not-shippable",
+      "notes": "Larger alternative (role stt-alt), pinned for evaluation: better Arabic accuracy in tests but about twice as slow on CPU and about 2.9 GB of memory. Not installed by \"Install Models.cmd\" and not used by the app. Upstream model card licence Apache-2.0 (Qwen/Qwen3-ASR-1.7B); no licence file is published with the GGUF."
+    },
+    {
+      "id": "llama.cpp-b11960-win-cpu-x64",
+      "role": "stt-runtime",
+      "engine": "llama.cpp",
+      "engine_version": "b11960",
+      "upstream_checkpoint": "ggml-org/llama.cpp release b11960 (Windows x64 CPU build)",
+      "source_revision": "github.com/ggml-org/llama.cpp@8642541b255bfb5dc39cd351a178be09013a55d6",
+      "conversion_revision": "official release binaries, unmodified (llama-server 0.8.0-dev, build 11960, Clang 20.1.8)",
+      "languages": [],
+      "task": "local-speech-server",
+      "install_subdir": "runtime/llama.cpp-b11960-win-cpu-x64",
+      "files": [
+        {
+          "role": "library:ggml-base",
+          "basename": "ggml-base.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "200cd9b6f0a7934c2e1c85e55289d5498332713321b03e83eb2ae3da5eeb6137",
+          "bytes": 805888
+        },
+        {
+          "role": "library:ggml-cpu-alderlake",
+          "basename": "ggml-cpu-alderlake.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "8ae4c14de9eeb5528e42cff69ed8485e6cd0e3f8601837add873a9d12199ca95",
+          "bytes": 1416704
+        },
+        {
+          "role": "library:ggml-cpu-cannonlake",
+          "basename": "ggml-cpu-cannonlake.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "779a9d0ede6215fba8a00fb680c1295dd62836f9d8a124437d48f9c086fc1f07",
+          "bytes": 1612800
+        },
+        {
+          "role": "library:ggml-cpu-cascadelake",
+          "basename": "ggml-cpu-cascadelake.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "71f6275d8aa7df86545975e02510e10280abfcc274ae419dee898746a5b2ce1b",
+          "bytes": 1585664
+        },
+        {
+          "role": "library:ggml-cpu-cooperlake",
+          "basename": "ggml-cpu-cooperlake.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "c0b3f9445cbd4490504c13d06e89b25bdbe9dea73784fc62c0c10ae7069de6cb",
+          "bytes": 1595392
+        },
+        {
+          "role": "library:ggml-cpu-haswell",
+          "basename": "ggml-cpu-haswell.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "0bc8209ebe520b43d8549db7d45ca87382df88c3a8b238f3dda42d96e2af178e",
+          "bytes": 1422336
+        },
+        {
+          "role": "library:ggml-cpu-icelake",
+          "basename": "ggml-cpu-icelake.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "81f86f655c82dfe330f9ee269b97a2b21352e5e876bd385d48bc61d9a6ca230b",
+          "bytes": 1592832
+        },
+        {
+          "role": "library:ggml-cpu-ivybridge",
+          "basename": "ggml-cpu-ivybridge.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "52f262a610ac189d0375472c66c46b7b366d618916ed67a2b119e69023c3f943",
+          "bytes": 1303552
+        },
+        {
+          "role": "library:ggml-cpu-piledriver",
+          "basename": "ggml-cpu-piledriver.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "340c9dc4c5618fa4f89e6311c31f2f472d3277a87858c79b3c44890b0e92d1e7",
+          "bytes": 1296384
+        },
+        {
+          "role": "library:ggml-cpu-sandybridge",
+          "basename": "ggml-cpu-sandybridge.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "6251d2dc50745bad1d0f16ea95a4484ef5d8c7cb49b5a4a33af85d199c08be61",
+          "bytes": 1292800
+        },
+        {
+          "role": "library:ggml-cpu-sapphirerapids",
+          "basename": "ggml-cpu-sapphirerapids.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "cdfdc20cb7f953f87e61ab90e234c864df4e2c2615f5651bd83a4cf27fdc4e3d",
+          "bytes": 1872384
+        },
+        {
+          "role": "library:ggml-cpu-skylakex",
+          "basename": "ggml-cpu-skylakex.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "da5c7c86df8409c08fb748ed5596eba65285ead7747581daa124a7fff2f65704",
+          "bytes": 1606656
+        },
+        {
+          "role": "library:ggml-cpu-sse42",
+          "basename": "ggml-cpu-sse42.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "00efeb321bb728616cde5719bab06ea575679f7ca4967367faa70fd5ca1c8ba6",
+          "bytes": 918016
+        },
+        {
+          "role": "library:ggml-cpu-x64",
+          "basename": "ggml-cpu-x64.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "af7233344eec5587d531b4e875ec5bf2b1aa62c2be57b657f69cca503f0db918",
+          "bytes": 910848
+        },
+        {
+          "role": "library:ggml-cpu-zen4",
+          "basename": "ggml-cpu-zen4.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "4ebbee0eb0c5a4e9e3c3b437d7a2876ede8f1d3e00526dad33db50f39f46e831",
+          "bytes": 1602560
+        },
+        {
+          "role": "library:ggml",
+          "basename": "ggml.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "d2e63157b90c0fd15f010fb2952d032d9f3296b8406b78ff0950211cc144705b",
+          "bytes": 78848
+        },
+        {
+          "role": "library:libomp",
+          "basename": "libomp.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "a12116ba72d1d6820407cf30be23da04ce79d6bb8a71a5ee71759c5a1faa6f1c",
+          "bytes": 768000
+        },
+        {
+          "role": "licence:LICENSE-LLVM-OpenMP",
+          "basename": "LICENSE-LLVM-OpenMP",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "fdad1758a9e1f9d5a81e18879b3406772115edc92c24bfa36b70c654f325e8e4",
+          "bytes": 19741
+        },
+        {
+          "role": "library:llama-common",
+          "basename": "llama-common.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "34370fd48c31112b2ebe4e7bb234747c1a9b39325a29e61302659c525a6049d9",
+          "bytes": 8337920
+        },
+        {
+          "role": "library:llama-server-impl",
+          "basename": "llama-server-impl.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "0b329dcfdece6a43f34d0554dec5ca0cc2efe6ee23d5aabd8141c51487668564",
+          "bytes": 10076672
+        },
+        {
+          "role": "server",
+          "basename": "llama-server.exe",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "81f65c6681d66099e5d48757aa2c050ba958dc43816e584f0bb4181eb7c910d8",
+          "bytes": 9216
+        },
+        {
+          "role": "library:llama",
+          "basename": "llama.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "af13ed8cb1454a80689dbd390310995b6c4b23333e096152453fe6d0fef17356",
+          "bytes": 3695616
+        },
+        {
+          "role": "library:mtmd",
+          "basename": "mtmd.dll",
+          "source_url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+          "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+          "sha256": "e82d563ae9dad225a3d15d0f189e046909713e26759ae9a046f89430bc845bd3",
+          "bytes": 2142720
+        }
+      ],
+      "licence_files": [
+        "LICENSE-LLVM-OpenMP"
+      ],
+      "verified_total_bytes": 45963549,
+      "status": "unresolved-not-shippable",
+      "notes": "Only llama-server and the libraries it loads, extracted from the official release zip llama-b11960-bin-win-cpu-x64.zip (24,407,745 bytes, SHA-256 73f962f82850d244db47eaacb9d913637027b82399124324298576d58c5f4287; see models/acquisition.json); each file's source_url is that zip. All ggml-cpu variants are kept: the CPU backend is chosen at start for the processor. Needs the Microsoft C++ runtime (msvcp140.dll, vcruntime140.dll, vcruntime140_1.dll): from System32, or app-local copies that \"Install Models.cmd\" takes from the PySide6 wheel when System32 has none. llama.cpp is MIT (licences/llama.cpp-MIT-LICENSE.txt); libomp is covered by LICENSE-LLVM-OpenMP from the zip."
+    },
+    {
+      "id": "whisper-small-int8-sherpa",
+      "role": "stt-legacy",
+      "engine": "sherpa-onnx",
+      "engine_version": "1.13.8",
+      "upstream_checkpoint": "openai/whisper-small",
+      "source_revision": "huggingface.co/csukuangfj/sherpa-onnx-whisper-small@8f3c18b358db4d1f2fc1eae49d75cd20989e4309",
+      "conversion_revision": "huggingface.co/csukuangfj/sherpa-onnx-whisper-small@8f3c18b358db4d1f2fc1eae49d75cd20989e4309",
+      "languages": [
+        "en",
+        "ar"
+      ],
+      "task": "transcribe",
+      "install_subdir": "stt/whisper-small-int8",
+      "files": [
+        {
+          "role": "encoder",
+          "basename": "small-encoder.int8.onnx",
+          "source_url": "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-small/resolve/8f3c18b358db4d1f2fc1eae49d75cd20989e4309/small-encoder.int8.onnx",
+          "revision": "8f3c18b358db4d1f2fc1eae49d75cd20989e4309",
+          "sha256": "4cbe7b22fa9026b843b60a68640c747de05bafb1a11b57edc0e66c232d9f33a9",
+          "bytes": 112442483
+        },
+        {
+          "role": "decoder",
+          "basename": "small-decoder.int8.onnx",
+          "source_url": "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-small/resolve/8f3c18b358db4d1f2fc1eae49d75cd20989e4309/small-decoder.int8.onnx",
+          "revision": "8f3c18b358db4d1f2fc1eae49d75cd20989e4309",
+          "sha256": "acad50b5c782696e91b55914cc5ab4f756f1532f76e22aa6fc615f39fb69a8ee",
+          "bytes": 262226114
+        },
+        {
+          "role": "tokens",
+          "basename": "small-tokens.txt",
+          "source_url": "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-small/resolve/8f3c18b358db4d1f2fc1eae49d75cd20989e4309/small-tokens.txt",
+          "revision": "8f3c18b358db4d1f2fc1eae49d75cd20989e4309",
+          "sha256": "b34b360dbb493e781e479794586d661700670d65564001f23024971d1f2fa126",
+          "bytes": 816730
+        }
+      ],
+      "licence_files": [],
+      "verified_total_bytes": 375485327,
+      "status": "unresolved-not-shippable",
+      "notes": "Legacy reference recognizer, not installed by \"Install Models.cmd\" and never used as a fallback. Kept so meetings saved by older builds keep a known engine identity. Upstream Whisper code and weights are MIT; the sherpa-onnx export repository has no licence file. Multilingual model (not .en)."
+    },
+    {
+      "id": "silero-vad",
+      "role": "vad",
+      "engine": "sherpa-onnx",
+      "engine_version": "1.13.8",
+      "upstream_checkpoint": "snakers4/silero-vad v4 (16 kHz branch)",
+      "source_revision": "github.com/k2-fsa/sherpa-onnx release asr-models asset silero_vad.onnx updated 2025-07-11",
+      "conversion_revision": "k2-fsa ONNX export; model metadata: 'silero-vad v4 exported to onnx by k2-fsa. Only the 16kHz branch is kept'",
+      "languages": [],
+      "task": "voice-activity-detection",
+      "install_subdir": "vad",
+      "files": [
+        {
+          "role": "model",
+          "basename": "silero_vad.onnx",
+          "source_url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx",
+          "revision": "sha256:9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6",
+          "sha256": "9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6",
+          "bytes": 643854
+        }
+      ],
+      "licence_files": [],
+      "verified_total_bytes": 643854,
+      "status": "unresolved-not-shippable",
+      "notes": "Voice activity detection used in front of the recognizer. The release tag is mutable, so the SHA-256 is the revision. Silero VAD is MIT (licences/silero-vad-MIT-LICENSE.txt)."
+    }
+  ]
+}

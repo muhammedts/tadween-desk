@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "meeting-minutes"
+version = "0.0.1"
+description = "Tadween Desk | تدوين: your meeting notes, on your PC. Local English/Arabic meeting transcription for Windows."
+requires-python = ">=3.11,<3.12"
+classifiers = ["Private :: Do Not Upload"]
+dependencies = [
+    "numpy>=2.4,<2.5",
+    "pydantic>=2.14,<3",
+    # WASAPI microphone and playback-loopback capture; Windows only.
+    "PyAudioWPatch==0.2.12.9; sys_platform == 'win32'",
+    # Voice activity detection (Silero VAD through sherpa-onnx, which bundles ONNX Runtime);
+    # soxr is the stateful resampler. Locked to the inspected Windows wheels.
+    "sherpa-onnx==1.13.8; sys_platform == 'win32'",
+    "soxr==1.1.0; sys_platform == 'win32'",
+    # Desktop window: Qt widgets only, without the large Addons package. LGPL-3.0.
+    "PySide6-Essentials==6.11.2; sys_platform == 'win32'",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "hypothesis>=6",
+    "pip-tools>=7",
+    "setuptools>=64",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+# Non-Python files read at run time: bundled licence notices (notices.py) and UI assets.
+meeting_minutes = ["licences/*", "licences/**/*", "ui/assets/*", "ui/assets/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers -p no:cacheprovider"
+xfail_strict = true
+filterwarnings = ["error"]

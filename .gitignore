@@ -1,0 +1,53 @@
+# Python / tooling
+.venv/
+.venv-*/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.hypothesis/
+.coverage
+htmlcov/
+
+# Secrets and local configuration
+.env
+.env.*
+*.pem
+*.key
+
+# The app never writes audio; recordings never belong in this repository.
+*.wav
+*.wave
+*.flac
+*.mp3
+*.m4a
+*.aac
+*.ogg
+*.opus
+*.wma
+*.webm
+*.mp4
+*.mkv
+*.mov
+*.pcm
+*.raw
+
+# Meeting data: databases and transcripts stay on the user's PC.
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Model weights and runtimes are installed by "Install Models.cmd"; only their metadata is versioned.
+app/models/*
+!app/models/manifest.json
+!app/models/acquisition.json
+*.onnx
+*.gguf
+*.bin
+*.safetensors
+*.part

@@ -1,0 +1,19 @@
+{
+  "about": "Where \"Install Models.cmd\" gets each speech asset. Per-file sizes and SHA-256 hashes are in manifest.json; this file adds the release archive that some files are extracted from. Every download is checked against these values before it is used.",
+  "archives": [
+    {
+      "entry": "llama.cpp-b11960-win-cpu-x64",
+      "basename": "llama-b11960-bin-win-cpu-x64.zip",
+      "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cpu-x64.zip",
+      "revision": "8642541b255bfb5dc39cd351a178be09013a55d6",
+      "bytes": 24407745,
+      "sha256": "73f962f82850d244db47eaacb9d913637027b82399124324298576d58c5f4287",
+      "licence": "MIT (llama.cpp); libomp: Apache-2.0 with LLVM exception (LICENSE-LLVM-OpenMP inside the zip)"
+    }
+  ],
+  "default_roles": [
+    "stt",
+    "stt-runtime",
+    "vad"
+  ]
+}
