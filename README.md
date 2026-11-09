@@ -22,8 +22,7 @@ and your PC's system audio.
   or recognition markers) to OpenAI. Audio is never sent. See [Privacy](#privacy).
 
 > **Status: early source release.** It targets Windows 10/11 (64-bit) and has been tested on
-> Windows 11. You run it from source with Python; there is no installer or program file. See
-> [Current limits](#current-limits) before relying on it.
+> Windows 11. You run it from source with Python; there is no installer or program file.
 
 ## What it does
 
@@ -179,36 +178,3 @@ Minutes are **drafts** until you approve them. Each point links to the transcrip
 is based on, unknown owners and dates stay empty instead of being guessed, and you can edit
 them; an export says whether it is a draft. Correcting the transcript marks the minutes as
 out of date; redacting text or deleting the meeting removes them.
-
-## Current limits
-
-- **Windows only**, 64-bit, CPU only (no GPU acceleration). Text appears a short delay after
-  speech; in a 5-minute two-source test on the one laptop tested (AMD Ryzen 7 5800U,
-  Windows 11) the median was about 1.2 seconds. Slower PCs fall further behind.
-- **Recognition is not perfect.** English is good on clear audio. Arabic is noticeably less
-  accurate, especially for dialects, names and noisy or overlapping speech. Lines the model
-  is unsure about are marked, but always review the transcript before you rely on it.
-- **"Mic" and "System" are sources, not speakers.** There is no speaker identification:
-  everyone on the call appears as System.
-- **No echo cancellation.** With speakers instead of headphones, the same speech can be
-  transcribed from both sources.
-- **Source-only release.** There is no installer, program file (EXE) or auto-update; you
-  start the app with `Start Tadween Desk.cmd`.
-- Tested by the developer on one Windows 11 laptop. Windows 10, other PCs, screen readers,
-  high-DPI setups and most audio devices have not been checked yet.
-- The interface is in English (transcripts can be Arabic or English).
-
-## Contributing and reporting issues
-
-See [CONTRIBUTING.md](CONTRIBUTING.md). **Never attach recordings, transcripts, meeting
-databases or API keys to an issue.** Describe the problem, and include the output of
-`.\.venv\Scripts\python.exe -m meeting_minutes doctor --no-capture` (run in `app\`), which
-contains no meeting content.
-
-## Licence
-
-Tadween Desk's own code is released under the [MIT License](LICENSE). It depends on
-third-party software and models under their own licences, including Qt for Python (PySide6,
-LGPL-3.0), Qwen3-ASR (Apache-2.0), llama.cpp (MIT) and Silero VAD (MIT). See
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Model weights are not part of this
-repository; `Install Models.cmd` downloads them from their publishers.
