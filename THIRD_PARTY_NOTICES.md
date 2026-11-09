@@ -44,7 +44,16 @@ sent unless you add a key and ask for minutes.
 
 ## Assets
 
-The UI icons in `app/src/meeting_minutes/ui/assets/` and the screenshots in `docs/images/`
-are part of this project. The two illustrations `docs/images/tadween-desk-cover.png` and
-`docs/images/tadween-desk-workflow.png` were generated for this project with OpenAI's image
-tools and keep their C2PA content credentials.
+The UI icons in `app/src/meeting_minutes/ui/assets/` and the images in `docs/images/` are
+part of this project.
+
+- `live-transcript.png` and `saved-transcript.png` are screenshots of the real app showing a
+  fictional demo meeting, rendered by `app/scripts/demo_screenshots.py`.
+- `tadween-desk-cover.png` and `tadween-desk-workflow.png` were designed for this project
+  with Anthropic's Claude as HTML layouts and exported to PNG.
+- `live-transcript-annotated.png` and `saved-transcript-annotated.png` are the two
+  screenshots above with numbered callouts added in the same way. The app interface in them
+  is unchanged.
+- These four designed images keep their C2PA content credentials (Anthropic).
+- The text added in them is set in Inter, Space Grotesk, IBM Plex Mono and Noto Kufi Arabic, all under the
+  SIL Open Font License 1.1. The fonts themselves are not included in this repository.

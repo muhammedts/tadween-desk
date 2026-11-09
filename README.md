@@ -2,16 +2,24 @@
 
 **Your meeting notes, on your PC.**
 
-![Tadween Desk: a laptop on a desk turning a sound wave into lines of text, with the tagline "Your meeting notes, on your PC."](docs/images/tadween-desk-cover.png)
+![Tadween Desk | تدوين: "Your meeting notes, on your PC." Open-source Windows app, English and Arabic, live. Beside it, a dashed box labelled This PC shows Mic and System audio feeding a live transcript with an English line, an Arabic line and a note that the mic is muted while system audio continues, then Edit, .txt and .md.](docs/images/tadween-desk-cover.png)
 
-Tadween Desk is a Windows desktop app that writes a live transcript of your meetings in
-English and Arabic. Live transcription runs on your PC, and the app does not save or upload
-meeting audio. You can correct the transcript later, export it as a text or Markdown file,
-and optionally draft meeting minutes with OpenAI when you choose to.
+Tadween Desk is an open-source Windows desktop app that writes down what was discussed while you
+focus on the meeting. It transcribes English and Arabic live from two sources: your microphone
+and your PC's system audio.
 
 *Tadween* (تدوين) is Arabic for "writing things down".
 
-![Three steps from left to right: headphones with a sound wave labelled "Meeting audio", a laptop labelled "Transcribe on your PC", and a page with a pencil labelled "Edit and export".](docs/images/tadween-desk-workflow.png)
+![Three steps inside a dashed box labelled This PC: Mic + system audio, then Transcribe on this PC, then Edit and export. Below it, separated by a dashed amber line: Optional, Generate MoM, to OpenAI, only when you choose.](docs/images/tadween-desk-workflow.png)
+
+- **Transcription runs on your PC.** After a one-time setup, speech recognition runs locally.
+  The app does not save or upload meeting audio.
+- **Edit and export.** Every meeting is saved in History on your PC. Correct or redact lines,
+  then use **Save As** to write a TXT or Markdown file.
+- **Minutes with OpenAI are optional.** Nothing is sent unless you add your own OpenAI API key
+  and press **Generate MoM** for a meeting. Only then does the app send that meeting's saved
+  transcript and related details (title, date, time zone, line timestamps, source labels and gap
+  or recognition markers) to OpenAI. Audio is never sent. See [Privacy](#privacy).
 
 > **Status: early source release.** It targets Windows 10/11 (64-bit) and has been tested on
 > Windows 11. You run it from source with Python; there is no installer or program file. See
@@ -40,9 +48,9 @@ and optionally draft meeting minutes with OpenAI when you choose to.
   minutes and action items from a saved transcript, with links back to the lines they came
   from. This is the only feature that sends anything off your PC; see [Privacy](#privacy).
 
-| Live transcript | Saved transcript |
-|---|---|
-| ![The Tadween Desk live meeting view of a fictional demo meeting. English lines from System audio and Arabic lines from the Mic, written right to left, appear with timestamps. The Mic is shown as "Excluded" with an "Unmute mic (Ctrl+M)" button, and a System line keeps arriving after the mute.](docs/images/live-transcript.png) | ![The saved transcript of the same fictional meeting in History. A corrected line is marked "Edited", the toolbar shows Save As, Copy, Correct, Redact and Edit history, and a green notice confirms that a Markdown copy was saved while History is unchanged.](docs/images/saved-transcript.png) |
+![The real Tadween Desk live view of a fictional meeting. Callout 1 marks the English and Arabic transcript lines, each labelled Mic or System, with Arabic written right to left. Callout 2 marks the mic excluded (muted in this app) while the System audio source keeps transcribing and a new System line arrives.](docs/images/live-transcript-annotated.png)
+
+![The same fictional meeting saved in History. Callout 3 marks the Save As button and the notice confirming that a Markdown copy was saved while History is unchanged.](docs/images/saved-transcript-annotated.png)
 
 *Screenshots of the real app with a fictional demo meeting (rendered by
 `app/scripts/demo_screenshots.py` with synthetic audio devices and a scripted recognizer).*
