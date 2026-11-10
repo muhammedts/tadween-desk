@@ -13,7 +13,7 @@ Rules kept here because SQL alone does not enforce them:
   the same transaction as the text;
 - every transcript change increments `meetings.transcript_revision`;
 - redaction and deletion remove the text, every revision and the index entries, then
-  merge the FTS index and truncate the WAL so the text does not linger in the files;
+  rebuild the FTS index and truncate the WAL so the text does not linger in the files;
 - retention cleanup (`purge_expired`) deletes only finished meetings past the
   cutoff, a bounded batch per transaction, all or nothing;
 - optional OpenAI minutes are derived data: deleting a meeting deletes them, and any
@@ -36,7 +36,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from meeting_minutes.storage.schema import connect, migrate
+from meeting_minutes.storage.schema import connect, fts_secure_delete_enabled, migrate
 from meeting_minutes.storage.search import MAX_PAGE, literal_query, normalize
 
 OWNER_ID = "00000000-0000-4000-8000-000000000001"  # the single local owner
@@ -57,7 +57,7 @@ class StorageError(RuntimeError):
 
 class MaintenanceError(StorageError):
     """A deletion or redaction was committed, but the maintenance that follows it
-    (merging the search index, folding the WAL back) failed. The removed rows are
+    (rebuilding the search index, folding the WAL back) failed. The removed rows are
     gone and no longer readable through the app; `deleted` lists the meetings that
     were deleted (empty for a redaction). Retry with `scrub()`."""
 
@@ -271,6 +271,32 @@ class TranscriptStore:
                       (OWNER_ID, "Local user", now))
             c.execute("INSERT OR IGNORE INTO agents(id, owner_id, label, created_at) VALUES (?, ?, ?, ?)",
                       (AGENT_ID, OWNER_ID, "This computer", now))
+        self._repair_search_index()
+
+    def _repair_search_index(self) -> None:
+        """A database created by an earlier version has FTS5's 'secure-delete'
+        option on, which can damage the index in SQLite 3.42.0. Turn it off and
+        rebuild the index from the saved rows (`search_documents`) in one
+        transaction, before any indexed write: an index already damaged is repaired,
+        no meeting, revision or minutes row is touched, and a failure rolls everything
+        back (StorageError; the database is never reset or deleted). The rebuild drops
+        old index pages, so the same transaction records the usual tidy-up as owed,
+        and the WAL is folded back now or by the window's next retry. Runs once: the
+        next open finds the option already off."""
+        try:
+            enabled = fts_secure_delete_enabled(self._conn)
+        except sqlite3.Error as exc:
+            raise StorageError(_code(exc)) from None
+        if not enabled:
+            return
+        with self._tx() as c:
+            c.execute("INSERT INTO search_fts(search_fts, rank) VALUES('secure-delete', 0)")
+            c.execute("INSERT INTO search_fts(search_fts) VALUES('rebuild')")
+            token = self._owe_maintenance(c)
+        try:
+            self._fold_back(token=token)
+        except MaintenanceError:
+            pass  # the index is repaired; folding the WAL back stays pending and is retried
 
     def close(self, *, wait_s: float | None = None) -> bool:
         """Close the database. With `wait_s`, gives up (returns False) if another
@@ -431,6 +457,7 @@ class TranscriptStore:
             # Any redaction invalidates every minutes version of the meeting and
             # deletes their generated text/actions in the same transaction.
             self._invalidate_minutes(c, meeting_id, "transcript_redacted")
+            self._owe_maintenance(c)  # committed with the redaction, so a crash cannot lose it
         self.scrub()  # MaintenanceError after this point means the text was removed
 
     def delete_meeting(self, meeting_id: str) -> None:
@@ -438,6 +465,7 @@ class TranscriptStore:
         StorageError: nothing was deleted; MaintenanceError: it was deleted."""
         with self._tx() as c:
             self._delete_rows(c, meeting_id)
+            self._owe_maintenance(c)
         try:
             self.scrub()
         except MaintenanceError as exc:
@@ -468,6 +496,8 @@ class TranscriptStore:
             ids = self.expired_meetings(before, exclude=exclude, limit=limit)
             for meeting_id in ids:
                 self._delete_rows(c, meeting_id)
+            if ids:
+                self._owe_maintenance(c)
         if ids:
             try:
                 self.scrub()
@@ -488,44 +518,89 @@ class TranscriptStore:
         c.execute("DELETE FROM meetings WHERE id = ?", (meeting_id,))
 
     def scrub(self) -> None:
-        """Merge the FTS index (dropping deleted tokens) and fold the WAL back into the
-        database so deleted text does not stay in -wal or in old database pages. Runs
-        after every deletion and redaction; call it again to retry after a
-        MaintenanceError. If it cannot finish, including when another connection's
-        read snapshot keeps the checkpoint 'busy', a marker is saved so the retry is
-        remembered after a restart (`maintenance_pending`). The marker is cleared only
-        after a checkpoint has succeeded, so a crash at any point leaves it set and the
-        retry is repeated. Best effort: storage hardware, snapshots and earlier
-        exports are outside the app's control."""
+        """Rebuild the FTS index from the saved rows and fold the WAL back into the
+        database, so deleted text stays neither in index pages, nor in -wal, nor in old
+        database pages (`PRAGMA secure_delete` zeroes the freed pages). Runs after every
+        deletion and redaction; call it again to retry after a MaintenanceError.
+
+        The deleting transaction itself records the tidy-up as owed
+        (`maintenance_pending`), so a stop or crash before or during this call leaves
+        the marker set and the window retries at its next start (`run_retention`). The
+        marker is cleared only after both the rebuild and a full checkpoint succeeded.
+        If the rebuild fails, the checkpoint is still attempted (it empties the WAL)
+        but the tidy-up stays pending: a clean WAL alone does not prove
+        the index was scrubbed. Another connection's read snapshot can keep the
+        checkpoint 'busy'; that is reported and stays pending too. Best effort: storage
+        hardware, snapshots and earlier exports are outside the app's control.
+        The index is rebuilt rather than merged ('optimize') because FTS5's own
+        'secure-delete' option is off (see `_repair_search_index`).
+
+        Several connections may share the file (e.g. two app windows on one History
+        folder). Each owed tidy-up writes a new token; the rebuild reads the token in
+        the same write transaction, so it covers every deletion committed before that
+        token, and only that exact token is cleared afterwards. A deletion committed
+        by another connection after the rebuild leaves a newer token, which stays
+        pending for its own retry."""
+        with self._lock:
+            failed = token = None
+            try:
+                with self._tx() as c:  # writers excluded: the rebuild covers this token's deletions
+                    row = c.execute("SELECT value_json FROM settings WHERE owner_id = ? AND key = ?",
+                                    (OWNER_ID, MAINTENANCE_KEY)).fetchone()
+                    c.execute("INSERT INTO search_fts(search_fts) VALUES('rebuild')")
+                token = row[0] if row else None
+            except StorageError as exc:
+                failed = exc.code  # still fold the WAL back below; then report it
+            self._fold_back(failed, token)
+
+    def _fold_back(self, failed: str | None = None, token: str | None = None) -> None:
+        """Checkpoint the WAL. If nothing failed, clear the owed-tidy-up marker only if
+        it still holds `token`, the obligation the preceding rebuild covered."""
         with self._lock:
             try:
-                self._conn.execute("INSERT INTO search_fts(search_fts) VALUES('optimize')")
                 busy = self._conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()[0]
-                if not busy and self.maintenance_pending():
-                    with self._tx() as c:
-                        c.execute("DELETE FROM settings WHERE owner_id = ? AND key = ?", (OWNER_ID, MAINTENANCE_KEY))
+                if failed is None and not busy and token is not None:
+                    with self._tx() as c:  # compare-and-clear: a newer obligation is left pending
+                        c.execute("DELETE FROM settings WHERE owner_id = ? AND key = ? AND value_json = ?",
+                                  (OWNER_ID, MAINTENANCE_KEY, token))
                     # Folds back the marker's own small write; the deleted text is already
                     # out of the WAL, so a reader blocking this one leaves nothing owed.
                     self._conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
             except sqlite3.Error as exc:
                 self._remember_maintenance()
-                raise MaintenanceError(_code(exc)) from None
+                raise MaintenanceError(failed or _code(exc)) from None
             except StorageError as exc:
                 self._remember_maintenance()
-                raise MaintenanceError(exc.code) from None
-            if busy:  # another reader still needs the old pages: they were not overwritten
+                raise MaintenanceError(failed or exc.code) from None
+            if failed is not None or busy:  # busy: another reader still needs the old pages
                 self._remember_maintenance()
-                raise MaintenanceError("busy")
+                raise MaintenanceError(failed or "busy")
 
     def maintenance_pending(self) -> bool:
         """Whether an earlier tidy-up after a deletion or redaction did not finish."""
         return bool(self.get_setting(MAINTENANCE_KEY))
 
     def _remember_maintenance(self) -> None:
+        """After a failed tidy-up: keep an existing marker as it is (it already stands
+        for unfinished work), or write one if there is none."""
         try:
-            self.set_setting(MAINTENANCE_KEY, True)
+            with self._tx() as c:
+                self._owe_maintenance(c, replace=False)
         except StorageError:
             pass  # cannot be saved either (e.g. disk full): the caller still gets MaintenanceError
+
+    @staticmethod
+    def _owe_maintenance(c: sqlite3.Connection, *, replace: bool = True) -> str:
+        """Record, inside the caller's transaction, that a tidy-up (`scrub`) is owed.
+        Each new obligation writes a new token (stored JSON text), replacing any older
+        one, so a tidy-up can clear only the obligation it covered. A marker written by
+        an earlier build (`true`) is still truthy and is cleared the same way. With
+        `replace=False` an existing marker is kept unchanged."""
+        token = json.dumps(uuid.uuid4().hex)
+        conflict = "DO UPDATE SET value_json = excluded.value_json" if replace else "DO NOTHING"
+        c.execute("INSERT INTO settings(owner_id, key, value_json) VALUES (?, ?, ?)"
+                  f" ON CONFLICT(owner_id, key) {conflict}", (OWNER_ID, MAINTENANCE_KEY, token))
+        return token
 
     # ------------------------------------------------------------------ settings
 
@@ -700,6 +775,7 @@ class TranscriptStore:
                 if any(not r[21] and r[23] != redactions for r in rows):
                     with self._tx() as c:
                         self._invalidate_minutes(c, meeting_id, "transcript_redacted")
+                        self._owe_maintenance(c)
                     try:
                         self.scrub()
                     except MaintenanceError:

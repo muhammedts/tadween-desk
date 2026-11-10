@@ -135,7 +135,6 @@ CREATE VIRTUAL TABLE search_fts USING fts5(
   normalized_text, content='search_documents', content_rowid='id',
   tokenize='unicode61'
 );
-INSERT INTO search_fts(search_fts, rank) VALUES('secure-delete', 1);
 CREATE TRIGGER search_documents_ai AFTER INSERT ON search_documents BEGIN
   INSERT INTO search_fts(rowid, normalized_text) VALUES(new.id, new.normalized_text);
 END;
@@ -212,6 +211,18 @@ CREATE INDEX IF NOT EXISTS minutes_versions_meeting ON minutes_versions(meeting_
 
 class SchemaError(RuntimeError):
     pass
+
+
+def fts_secure_delete_enabled(conn: sqlite3.Connection) -> bool:
+    """Whether the search index still has FTS5's own 'secure-delete' option on.
+
+    Databases created by earlier versions have it on. In SQLite 3.42.0 (the version
+    inside CPython 3.11.4) that option can damage the index when indexed rows are
+    deleted or replaced, after which later saves can fail. It is a separate setting
+    from `PRAGMA secure_delete`, which stays on: deleted text is still removed by
+    rebuilding the index after each deletion (`TranscriptStore.scrub`)."""
+    row = conn.execute("SELECT v FROM search_fts_config WHERE k = 'secure-delete'").fetchone()
+    return bool(row and row[0])
 
 
 def connect(path: str) -> sqlite3.Connection:
