@@ -39,12 +39,34 @@ CARD_MEETING = "Meeting"
 TITLE_HELP = "Optional. Left empty, the meeting is named by its start time. You can rename it later."
 CARD_SOURCES = "Audio sources"
 REFRESH = "Refresh devices"
-REFRESH_DONE = "Device list refreshed — {mics} microphone(s), {outs} playback device(s)."
+REFRESH_DONE = ("Device list refreshed — {mics} microphone(s), {outs} playback device(s), {apps} "
+                "application(s).")
 DEVICE_NONE = "None — don't transcribe"
 START_MUTED = "Start with my mic excluded (muted in this app)"
 START_MUTED_HELP = "You can include it any time with Unmute mic ({keys})."
 SYSTEM_HELP = ("System audio is everything this PC plays on the selected output — the meeting app, videos, "
                "notification sounds. Close other audio you don't want transcribed.")
+# Three computer-sound choices; the microphone stays separate.
+MIC_LABEL = "Your microphone"
+SOUND_LABEL = "Computer sound"
+SOUND_MODES = (("app", "One application"), ("device", "Everything on an output device"),
+               ("none", "None — don't transcribe computer sound"))
+SOUND_MODE_HELP = {
+    "app": "Only the sound this application and its helper processes play is transcribed — other apps, videos and "
+           "notification sounds are left out. A browser's tabs and windows usually count as one application.",
+    "device": SYSTEM_HELP,
+    "none": "No computer sound is transcribed. Your microphone can still be used on its own."}
+ROUTING_LEAD = {
+    "app": "System audio is the sound the chosen application plays, whichever output it uses. ",
+    "device": "System audio is everything this computer plays on the selected output, including the meeting app. ",
+    "none": ""}
+OUTPUT_LABEL = "Output device"
+OUTPUT_PLACEHOLDER = "Choose an output device"
+APP_LABEL = "Application"
+APP_PLACEHOLDER = "Choose an application"
+APP_NONE_OPEN = "No application with an open window — open it, then Refresh"
+APP_UNSUPPORTED = ("One application needs Windows 10 build 20348 or later. The other two choices still work.")
+APP_LIST_FAILED = "The list of applications could not be read. The other two choices still work."
 ONE_SOURCE = "If one source can't open, continue with the other"
 ONE_SOURCE_HELP = "Otherwise you'll be asked before starting with one source."
 ROUTING_LINK = "How audio routing works — mute, echo and headphones"
@@ -59,14 +81,19 @@ CHECK_AGAIN = "Check again"
 READY_MIC = {"selected": "Microphone selected", "excluded": "Microphone selected — starts excluded",
              "none": "No microphone"}
 READY_MIC_NONE_HELP = "Only System audio will be transcribed."
-READY_SYSTEM = {"selected": "System audio selected", "none": "No System audio"}
+READY_SYSTEM = {"selected": "System audio selected", "none": "No System audio",
+                "app": "One application selected", "choose": "Computer sound not chosen yet"}
 READY_SYSTEM_NONE_HELP = "Only your microphone will be transcribed."
+READY_SYSTEM_CHOOSE_HELP = {"app": "Choose the application, or another computer sound choice.",
+                            "device": "Choose the output device, or another computer sound choice."}
 READY_OPTIONAL = "Optional"
 START = "Start transcribing"
 START_HINT = "Starts the selected sources. The controls stay at the top of every page."
 START_WHY_LOADING = "Start is available when the speech model is ready."
 START_WHY_MODEL = "Start is unavailable: the speech model is not ready."
 START_WHY_DEVICES = "Select a microphone, a playback device, or both."
+START_WHY_APP = "Choose an application for computer sound, or another computer sound choice."
+START_WHY_OUTPUT = "Choose an output device for computer sound, or another computer sound choice."
 RECOVERED_TITLE = "{n} meeting(s) were still running when the app last closed"
 RECOVERED_BODY = ("Their saved text is kept and they are marked “Ended incomplete”. Capture was not restarted.")
 RECOVERED_OPEN = "Open it"
@@ -109,7 +136,7 @@ EVENT_LABEL = {
     "segment_redacted": ROW_REDACTED,
 }
 DEVICE_LOST_LABEL = {"mic": "No mic text — microphone disconnected",
-                     "system": "No System text — playback device disconnected"}
+                     "system": "No System text — playback device disconnected or application closed"}
 SIDE_SOURCES = "Sources"
 SIDE_STATUS = "Status"
 SOURCE_HEADING = {"mic": "Mic", "system": "System audio"}
@@ -124,6 +151,7 @@ METER_PAUSED = "Not transcribed while paused"
 METER_LOST = "No signal"
 METER_STOPPED = "Capture stopped"
 SYSTEM_NOTE = "Everything played on this output is transcribed."
+APP_NOTE = "Only this application's sound is transcribed."
 RECONNECT = "Reconnect"
 STATUS_KEEPING_UP = "Recognition keeping up"
 STATUS_BEHIND = "Recognition {n} s behind — text will appear late"
@@ -141,6 +169,12 @@ ALERT_LOST_BODY = {"mic": "“{device}” stopped delivering audio. System audio
                    "system": "“{device}” stopped delivering audio. Your mic continues. The missing time is marked "
                              "in the transcript."}
 ALERT_RECONNECT = {"mic": "Reconnect microphone", "system": "Reconnect playback device"}
+APP_LOST_TITLE = "Application closed or stopped — its sound is not being transcribed"
+APP_LOST_BODY = ("“{device}” closed or stopped sending sound. Your mic continues. The missing time is marked in the "
+                 "transcript. Reconnect works only while the same program is still running. Tadween never switches "
+                 "to another application or device by itself: to use another source, Stop and start a new meeting "
+                 "with a fresh choice.")
+APP_RECONNECT = "Reconnect application"
 ALERT_RECONNECTED_TITLE = {"mic": "Microphone reconnected", "system": "Playback device reconnected"}
 ALERT_RECONNECTED_BODY = {True: "Mic transcription has resumed.",
                           False: "The mic stays excluded, as before. Use Unmute mic to include it."}

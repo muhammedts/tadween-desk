@@ -73,6 +73,8 @@ from PySide6.QtWidgets import (
 )
 
 from meeting_minutes import retention
+from meeting_minutes.capture.app_loopback import UNSUPPORTED as APP_UNSUPPORTED
+from meeting_minutes.capture.app_loopback import is_application, is_application_id
 from meeting_minutes.capture.base import CaptureBackend
 from meeting_minutes.domain.contracts import Direction, Source
 from meeting_minutes.export import ExportError, UnsavedLine, render, suggest_filename, write_file
@@ -747,23 +749,45 @@ class MainWindow(QMainWindow):
         refresh.clicked.connect(lambda: self.refresh_devices(announce_result=True))
         sources.title_row.addWidget(refresh)
         self.mic_combo = QComboBox()
+        # Computer sound: one application, everything on an output device, or
+        # none. The output-device and application pickers hold real choices only; "None" is
+        # the third choice, so an empty picker never starts capture silently.
+        self.sound_mode = QComboBox()
+        for mode, text in C.SOUND_MODES:
+            self.sound_mode.addItem(text, mode)
+        self.sound_mode.setCurrentIndex(self.sound_mode.findData("device"))  # today's behaviour
         self.system_combo = QComboBox()
+        self.system_combo.setPlaceholderText(C.OUTPUT_PLACEHOLDER)
+        self.app_combo = QComboBox()
+        self.app_combo.setPlaceholderText(C.APP_PLACEHOLDER)
+        self._app_names: dict[str, str] = {}
+        self._session_app = False
         self.language_combo = QComboBox()
-        for combo in (self.mic_combo, self.system_combo, self.language_combo):
+        for combo in (self.mic_combo, self.sound_mode, self.system_combo, self.app_combo, self.language_combo):
             # Long device names must not widen the window; the open list shows them in full.
             combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
             combo.setMinimumContentsLength(18)
-        for widget, name in ((self.mic_combo, "Microphone"), (self.system_combo, "System audio (playback device)"),
-                             (self.language_combo, "Language")):
+        for widget, name in ((self.mic_combo, "Microphone"), (self.sound_mode, C.SOUND_LABEL),
+                             (self.system_combo, "System audio (playback device)"),
+                             (self.app_combo, C.APP_LABEL), (self.language_combo, "Language")):
             widget.setAccessibleName(name)
         self.start_muted = QCheckBox(C.START_MUTED)
         self.start_muted_help = label("", role="help")
         self.allow_degraded = QCheckBox(C.ONE_SOURCE)
         self.allow_degraded.setAccessibleDescription(C.ONE_SOURCE_HELP)
-        sources.box.addWidget(self._field("Microphone", self.mic_combo))
+        sources.box.addWidget(self._field(C.MIC_LABEL, self.mic_combo))
         sources.box.addWidget(self.start_muted)
         sources.box.addWidget(self.start_muted_help)
-        sources.box.addWidget(self._field("System audio (playback device)", self.system_combo, C.SYSTEM_HELP))
+        sources.box.addWidget(self._field(C.SOUND_LABEL, self.sound_mode))
+        self.sound_help = label("", role="help")
+        sources.box.addWidget(self.sound_help)
+        self.app_field = self._field(C.APP_LABEL, self.app_combo)
+        self.app_problem = label("", role="help")
+        self.app_problem.setVisible(False)
+        self.app_field.layout().addWidget(self.app_problem)
+        self.system_field = self._field(C.OUTPUT_LABEL, self.system_combo)
+        sources.box.addWidget(self.app_field)
+        sources.box.addWidget(self.system_field)
         sources.box.addWidget(self.allow_degraded)
         sources.box.addWidget(label(C.ONE_SOURCE_HELP, role="help"))
         sources.box.addWidget(link_button(C.ROUTING_LINK, self.show_routing_help), 0, Qt.AlignmentFlag.AlignLeft)
@@ -824,8 +848,11 @@ class MainWindow(QMainWindow):
         box.addStretch(1)
 
         self.language_combo.currentIndexChanged.connect(lambda _: self._language_changed())
-        for combo in (self.mic_combo, self.system_combo):
-            combo.currentIndexChanged.connect(lambda _: self._update_readiness())
+        self.mic_combo.currentIndexChanged.connect(lambda _: self._update_readiness())
+        self.sound_mode.currentIndexChanged.connect(lambda _: self._sound_mode_changed())
+        # Picking an output device or an application is that computer-sound choice.
+        self.system_combo.currentIndexChanged.connect(lambda _: self._picked_sound("device", self.system_combo))
+        self.app_combo.currentIndexChanged.connect(lambda _: self._picked_sound("app", self.app_combo))
         self.start_muted.toggled.connect(lambda _: self._update_readiness())
         self._language_changed(load=False)
         self.preflight_page = _scroll_page(body, C.NEW_H1)
@@ -855,8 +882,14 @@ class MainWindow(QMainWindow):
 
     def refresh_devices(self, announce_result: bool = False) -> None:
         backend = self._backend_factory()
+        titles: dict[str, tuple[str, ...]] = {}
+        app_error: str | None = None
         try:
             devices = backend.enumerate()
+            window_titles = getattr(backend, "window_titles", None)
+            if callable(window_titles):
+                titles = {d.device_id: tuple(window_titles(d.device_id)) for d in devices if is_application(d)}
+            app_error = getattr(backend, "application_error", None)
         except Exception:  # noqa: BLE001 - shown as a fixed message
             devices = []
             self.start_error.setText("Could not list audio devices. Check that Windows audio is running.")
@@ -864,27 +897,99 @@ class MainWindow(QMainWindow):
             close = getattr(backend, "close", None)
             if callable(close):
                 close()
-        for combo, direction in ((self.mic_combo, Direction.CAPTURE), (self.system_combo, Direction.RENDER)):
-            previous = combo.currentData()
-            combo.blockSignals(True)
-            combo.clear()
-            combo.addItem(C.DEVICE_NONE, None)
-            choice = 0
-            for d in devices:
-                if d.direction is not direction or not d.available:
-                    continue
-                label_text = d.display_name + ("  [Windows default]" if "default" in d.default_roles else "")
-                combo.addItem(label_text, d.device_id)
-                combo.setItemData(combo.count() - 1, d.display_name, Qt.ItemDataRole.ToolTipRole)
-                if d.device_id == previous or (previous is None and "default" in d.default_roles and choice == 0):
-                    choice = combo.count() - 1
-            combo.setCurrentIndex(choice)
-            combo.blockSignals(False)
-        self._update_readiness()
+        outputs = [d for d in devices if d.direction is Direction.RENDER and d.available and not is_application(d)]
+        apps = [d for d in devices if is_application(d) and d.available]
+        mics = [d for d in devices if d.direction is Direction.CAPTURE and d.available]
+        self._fill(self.mic_combo, [(d, self._labelled(d)) for d in mics], none_item=True,
+                   default=next((d.device_id for d in mics if "default" in d.default_roles), None))
+        self._fill(self.system_combo, [(d, self._labelled(d)) for d in outputs], none_item=False,
+                   default=next((d.device_id for d in outputs if "default" in d.default_roles), None))
+        self._app_names = {d.device_id: d.display_name for d in apps}
+        names = [d.display_name for d in apps]
+        entries = []
+        for d in apps:
+            text, window = d.display_name, titles.get(d.device_id, ())
+            if names.count(d.display_name) > 1 and window:
+                text = f"{d.display_name} — {window[0][:50]}"  # tells instances apart; never stored
+            entries.append((d, text))
+        self._fill(self.app_combo, entries, none_item=False, default=None, tips=titles)
+        self.app_combo.setPlaceholderText(C.APP_PLACEHOLDER if apps else C.APP_NONE_OPEN)
+        unsupported = app_error == APP_UNSUPPORTED
+        item = self.sound_mode.model().item(self.sound_mode.findData("app"))
+        if item is not None:
+            item.setEnabled(not unsupported)
+        if unsupported and self.sound_mode.currentData() == "app":
+            self.sound_mode.setCurrentIndex(self.sound_mode.findData("device"))
+        self.app_problem.setText(C.APP_UNSUPPORTED if unsupported else C.APP_LIST_FAILED if app_error else "")
+        self.app_problem.setVisible(bool(app_error))
+        self._sound_mode_changed()
         if announce_result:
-            text = C.REFRESH_DONE.format(mics=self.mic_combo.count() - 1, outs=self.system_combo.count() - 1)
+            text = C.REFRESH_DONE.format(mics=len(mics), outs=len(outputs), apps=len(apps))
             self.start_hint.setText(text)
             announce(self.start_hint, text)
+
+    @staticmethod
+    def _labelled(d: Any) -> str:
+        return d.display_name + ("  [Windows default]" if "default" in d.default_roles else "")
+
+    @staticmethod
+    def _fill(combo: QComboBox, entries: list[tuple[Any, str]], *, none_item: bool, default: str | None,
+              tips: dict[str, tuple[str, ...]] | None = None) -> None:
+        """Refill a picker, keeping the current choice while it is still listed. A picker
+        without a "None" item starts empty unless Windows names a default: nothing else is
+        chosen on the user's behalf."""
+        previous = combo.currentData()
+        combo.blockSignals(True)
+        combo.clear()
+        if none_item:
+            combo.addItem(C.DEVICE_NONE, None)
+        choice = 0 if none_item else -1
+        for d, text in entries:
+            combo.addItem(text, d.device_id)
+            tip = "\n".join((tips or {}).get(d.device_id, ())) or d.display_name
+            combo.setItemData(combo.count() - 1, tip, Qt.ItemDataRole.ToolTipRole)
+            if d.device_id == previous or (previous is None and d.device_id == default and choice in (0, -1)):
+                choice = combo.count() - 1
+        combo.setCurrentIndex(choice)
+        combo.blockSignals(False)
+
+    def _picked_sound(self, mode: str, combo: QComboBox) -> None:
+        if combo.currentIndex() >= 0 and self.sound_mode.currentData() != mode:
+            self.sound_mode.setCurrentIndex(self.sound_mode.findData(mode))  # updates readiness
+        else:
+            self._update_readiness()
+
+    def _sound_mode_changed(self) -> None:
+        mode = self.sound_mode.currentData()
+        self.app_field.setVisible(mode == "app")
+        self.system_field.setVisible(mode == "device")
+        self.sound_help.setText(C.SOUND_MODE_HELP.get(mode, ""))
+        self.routing_note.setText(C.ROUTING_LEAD.get(mode, "") + ROUTING_NOTE)
+        self._update_readiness()
+
+    def _system_choice(self) -> str | None:
+        """The computer-sound source id for Start, or None (the "None" choice, or a
+        picker with nothing chosen yet: Start then says what to choose)."""
+        mode = self.sound_mode.currentData()
+        combo = self.app_combo if mode == "app" else self.system_combo if mode == "device" else None
+        return None if combo is None else combo.currentData()
+
+    def _system_name(self) -> str:
+        choice = self._system_choice()
+        if choice is None:
+            return ""
+        if self.sound_mode.currentData() == "app":
+            return self._app_names.get(choice, self.app_combo.currentText())  # the program name only
+        return self._device_name(self.system_combo)
+
+    def _sound_missing(self) -> str:
+        """Why Start waits for a computer-sound choice ("" when nothing is missing)."""
+        mode = self.sound_mode.currentData()
+        if mode == "app" and self.app_combo.currentData() is None:
+            return C.START_WHY_APP
+        if mode == "device" and self.system_combo.currentData() is None:
+            return C.START_WHY_OUTPUT
+        return ""
 
     def _device_name(self, combo: QComboBox) -> str:
         return combo.currentText().replace("  [Windows default]", "")
@@ -904,17 +1009,23 @@ class MainWindow(QMainWindow):
             self.model_item.set_state("busy", C.MODEL_TITLE["loading"])
             why = C.START_WHY_LOADING
         self.check_model_button.setVisible(mode in self._engine_errors)
-        mic, system = self.mic_combo.currentData(), self.system_combo.currentData()
+        mic, system = self.mic_combo.currentData(), self._system_choice()
+        sound_mode, sound_missing = self.sound_mode.currentData(), self._sound_missing()
         if mic is None:
             self.mic_item.set_state("neutral", C.READY_MIC["none"], C.READY_MIC_NONE_HELP)
         else:
             self.mic_item.set_state("ok", C.READY_MIC["excluded" if self.start_muted.isChecked() else "selected"],
                                     self._device_name(self.mic_combo))
-        if system is None:
+        if sound_missing:
+            self.system_item.set_state("bad", C.READY_SYSTEM["choose"], C.READY_SYSTEM_CHOOSE_HELP[sound_mode])
+        elif system is None:
             self.system_item.set_state("neutral", C.READY_SYSTEM["none"], C.READY_SYSTEM_NONE_HELP)
         else:
-            self.system_item.set_state("ok", C.READY_SYSTEM["selected"], self._device_name(self.system_combo))
-        if mic is None and system is None:
+            self.system_item.set_state("ok", C.READY_SYSTEM["app" if sound_mode == "app" else "selected"],
+                                       self._system_name())
+        if sound_missing:
+            why = why or sound_missing
+        elif mic is None and system is None:
             why = why or C.START_WHY_DEVICES
         theme.set_props(self.start_button, blocked=bool(why))
         self.start_button.setAccessibleDescription(why)
@@ -1192,7 +1303,10 @@ class MainWindow(QMainWindow):
             self._retry_failed_load(mode)
             self._ensure_engine()
             return
-        mic, system = self.mic_combo.currentData(), self.system_combo.currentData()
+        mic, system = self.mic_combo.currentData(), self._system_choice()
+        if self._sound_missing():
+            self.start_error.setText(self._sound_missing())
+            return
         if mic is None and system is None:
             self.start_error.setText("Select a microphone, a playback device, or both.")
             return
@@ -1233,7 +1347,11 @@ class MainWindow(QMainWindow):
         self._ended_elapsed = None
         self._stopped_at = None
         self._session_devices = {"mic": self._device_name(self.mic_combo) if mic else "",
-                                 "system": self._device_name(self.system_combo) if system else ""}
+                                 "system": self._system_name() if system else ""}
+        self._session_app = is_application_id(system)
+        self.source_cards["system"].note.setText(C.APP_NOTE if self._session_app else C.SYSTEM_NOTE)
+        self.reconnect_buttons["system"].setText(C.APP_RECONNECT if self._session_app
+                                                 else f"Reconnect {SOURCE_NAMES['system'].lower()}")
         self._clear_live()
         self._live_counts = {"excluded": 0, "paused": 0, "gaps": 0}
         self._source_states = {}
@@ -1258,8 +1376,10 @@ class MainWindow(QMainWindow):
     def _offer_one_source(self, failed_source: str, code: str) -> None:
         """A selected source could not open and "continue with the other" was off:
         ask, instead of starting with one source silently."""
-        combo = self.mic_combo if failed_source == "mic" else self.system_combo
-        choice = self._ask_one_source(failed_source, self._device_name(combo), code)
+        combo = self.mic_combo if failed_source == "mic" else (
+            self.app_combo if self.sound_mode.currentData() == "app" else self.system_combo)
+        name = self._system_name() if combo is self.app_combo else self._device_name(combo)
+        choice = self._ask_one_source(failed_source, name, code)
         if choice == "continue":
             self.start_meeting(degraded=True)
         elif choice == "choose":
@@ -1738,9 +1858,12 @@ class MainWindow(QMainWindow):
                                        actions=[(C.ALERT_RECONNECT[name], lambda src=name: self._reconnect(src))])
             elif lost:
                 self.alerts.hide_alert(f"m:degraded:{name}")
-                self.alerts.show_alert(f"m:lost:{name}", "bad", C.ALERT_LOST_TITLE[name],
-                                       C.ALERT_LOST_BODY[name].format(device=device), details=details,
-                                       actions=[(C.ALERT_RECONNECT[name], lambda src=name: self._reconnect(src))])
+                app = name == "system" and self._session_app
+                self.alerts.show_alert(f"m:lost:{name}", "bad", C.APP_LOST_TITLE if app else C.ALERT_LOST_TITLE[name],
+                                       (C.APP_LOST_BODY if app else C.ALERT_LOST_BODY[name]).format(device=device),
+                                       details=details,
+                                       actions=[(C.APP_RECONNECT if app else C.ALERT_RECONNECT[name],
+                                                 lambda src=name: self._reconnect(src))])
             else:
                 self.alerts.hide_alert(f"m:lost:{name}")
                 self.alerts.hide_alert(f"m:degraded:{name}")

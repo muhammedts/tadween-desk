@@ -35,13 +35,16 @@ def _doctor(args: argparse.Namespace) -> int:
 
 
 def make_backend(name: str) -> Any:
+    """Microphones and output devices, plus applications as computer-sound
+    sources; each selection is routed to the backend that owns its id."""
     if name == "fake":
-        from meeting_minutes.capture.fake import RealtimeFakeBackend
+        from meeting_minutes.capture.fake import DEFAULT_FAKE_DEVICES, FAKE_APP_DEVICES, RealtimeFakeBackend
 
-        return RealtimeFakeBackend()
+        return RealtimeFakeBackend(devices=DEFAULT_FAKE_DEVICES + FAKE_APP_DEVICES)
+    from meeting_minutes.capture.app_loopback import AppLoopbackBackend, RoutedBackend
     from meeting_minutes.capture.wasapi import WasapiBackend
 
-    return WasapiBackend()
+    return RoutedBackend(WasapiBackend(), AppLoopbackBackend())
 
 
 def _resolve_choice(devices: list, choice: str | None, direction: str) -> str | None:
@@ -68,7 +71,8 @@ def _devices(args: argparse.Namespace) -> int:
     if not devices:
         print("No WASAPI endpoints found.")
     for d in devices:
-        role = "microphone" if d.direction.value == "capture" else "playback (system audio via loopback)"
+        role = ("microphone" if d.direction.value == "capture" else "application (its own sound only)"
+                if d.backend == "app_loopback" else "playback (system audio via loopback)")
         fmt = ", ".join(f"{f.sample_rate} Hz x{f.channels}" for f in d.probed_formats) or "not capturable"
         default = " [default]" if "default" in d.default_roles else ""
         print(f"{d.device_id}\n    {role}{default}: {d.display_name} ({fmt})")
@@ -273,7 +277,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     test = commands.add_parser("capture-test", help="explicit timed capture check; prints counts and levels only")
     test.add_argument("--mic", default="default", help="device id, 'default' or 'none'")
-    test.add_argument("--system", default="default", help="playback device id, 'default' or 'none'")
+    test.add_argument("--system", default="default",
+                      help="playback device id, application id (app:...), 'default' or 'none'")
     test.add_argument("--seconds", type=float, default=5.0)
     test.add_argument("--start-excluded", action="store_true", help="start with the mic excluded")
     test.add_argument("--exclude-mic-at", type=float, action="append", default=[], metavar="SECONDS")
@@ -287,7 +292,8 @@ def build_parser() -> argparse.ArgumentParser:
                                help="explicit timed live transcription with the legacy Whisper small model (the app "
                                     "uses Qwen3-ASR); prints final text to this console only")
     live.add_argument("--mic", default="default", help="device id, 'default' or 'none'")
-    live.add_argument("--system", default="default", help="playback device id, 'default' or 'none'")
+    live.add_argument("--system", default="default",
+                      help="playback device id, application id (app:...), 'default' or 'none'")
     live.add_argument("--seconds", type=float, default=20.0)
     live.add_argument("--start-excluded", action="store_true", help="start with the mic excluded")
     live.add_argument("--exclude-mic-at", type=float, action="append", default=[], metavar="SECONDS")
@@ -317,4 +323,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    return args.handler(args)
+    code = args.handler(args)
+    capture = sys.modules.get("meeting_minutes.capture.app_loopback")
+    if capture is not None:  # its exit guard may end the process itself
+        capture.note_exit_code(code)
+    return code

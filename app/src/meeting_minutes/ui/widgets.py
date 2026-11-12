@@ -414,8 +414,10 @@ class SourceCard(QFrame):
         self.meter = Meter(C.SOURCE_HEADING[source])
         box.addWidget(self.meter_caption)
         box.addWidget(self.meter)
-        if source == "system":
-            box.addWidget(label(C.SYSTEM_NOTE, role="help"))
+        # What the System card covers: a whole output device, or one application.
+        self.note = label(C.SYSTEM_NOTE if source == "system" else "", role="help")
+        self.note.setVisible(source == "system")
+        box.addWidget(self.note)
         box.addWidget(reconnect, 0, Qt.AlignmentFlag.AlignLeft)
 
 

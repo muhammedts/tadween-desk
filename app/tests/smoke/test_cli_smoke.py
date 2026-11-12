@@ -105,8 +105,10 @@ def test_devices_lists_fake_endpoints_as_json():
     proc = run("devices", "--backend", "fake", "--json")
     assert proc.returncode == 0, proc.stderr
     devices = json.loads(proc.stdout)
-    assert {d["device_id"] for d in devices} == {FAKE_MIC, FAKE_SYSTEM}
+    # The fake backend also lists one fake application source.
+    assert {d["device_id"] for d in devices} == {FAKE_MIC, FAKE_SYSTEM, "app:fake-player"}
     assert {d["direction"] for d in devices} == {"capture", "render"}
+    assert {d["backend"] for d in devices if d["device_id"] == "app:fake-player"} == {"app_loopback"}
 
 
 def test_capture_test_reports_counts_states_and_mute_without_audio():

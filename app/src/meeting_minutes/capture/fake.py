@@ -42,6 +42,8 @@ class FakeDeviceSpec:
     tone_hz: float
     frames_per_buffer: int
     amplitude: float = 0.1
+    # "app_loopback" makes the device an application source in the UI.
+    backend: str = FAKE_BACKEND
 
 
 DEFAULT_FAKE_DEVICES: tuple[FakeDeviceSpec, ...] = (
@@ -60,6 +62,19 @@ DEFAULT_FAKE_DEVICES: tuple[FakeDeviceSpec, ...] = (
         fmt=AudioFormat(sample_rate=44_100, channels=2),
         tone_hz=660.0,
         frames_per_buffer=441,
+    ),
+)
+
+# A fake application source for running the desktop without hardware.
+FAKE_APP_DEVICES: tuple[FakeDeviceSpec, ...] = (
+    FakeDeviceSpec(
+        device_id="app:fake-player",
+        display_name="Fake player application",
+        direction=Direction.RENDER,
+        fmt=AudioFormat(sample_rate=48_000, channels=2),
+        tone_hz=550.0,
+        frames_per_buffer=480,
+        backend="app_loopback",
     ),
 )
 
@@ -189,7 +204,7 @@ class FakeAudioBackend:
             DeviceDescriptor(
                 device_id=d.device_id,
                 display_name=d.display_name,
-                backend=FAKE_BACKEND,
+                backend=d.backend,
                 direction=d.direction,
                 identity_stability=IdentityStability.STABLE_ENDPOINT_ID,
                 supports_loopback=d.direction is Direction.RENDER,

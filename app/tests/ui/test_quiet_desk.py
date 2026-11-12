@@ -449,7 +449,8 @@ def test_readiness_follows_the_start_guards(app, tmp_path: Path) -> None:
     window.start_muted.setChecked(True)
     assert window.mic_item.title.text() == C.READY_MIC["excluded"]
     window.mic_combo.setCurrentIndex(0)
-    window.system_combo.setCurrentIndex(0)
+    # "None" is the third computer-sound choice, not an item in the device list.
+    window.sound_mode.setCurrentIndex(window.sound_mode.findData("none"))
     assert window.start_button.property("blocked") and window.start_hint.text() == C.START_WHY_DEVICES
     window.start_button.click()  # still focusable and clickable: it says why
     assert window.session is None and "Select a microphone" in window.start_error.text()
