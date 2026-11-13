@@ -73,7 +73,7 @@
       "licence_files": [],
       "verified_total_bytes": 2520744288,
       "status": "unresolved-not-shippable",
-      "notes": "Larger alternative (role stt-alt), pinned for evaluation: better Arabic accuracy in tests but about twice as slow on CPU and about 2.9 GB of memory. Not installed by \"Install Models.cmd\" and not used by the app. Upstream model card licence Apache-2.0 (Qwen/Qwen3-ASR-1.7B); no licence file is published with the GGUF."
+      "notes": "Larger alternative (role stt-alt), pinned for evaluation: better Arabic accuracy in tests but about twice as slow on CPU and about 2.9 GB of memory. Installed with \"Install Models.cmd -Model 1.7B\"; the app uses it when the 0.6B model is not installed. Upstream model card licence Apache-2.0 (Qwen/Qwen3-ASR-1.7B); no licence file is published with the GGUF."
     },
     {
       "id": "llama.cpp-b11960-win-cpu-x64",

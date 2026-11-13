@@ -20,7 +20,7 @@ from typing import Any
 
 from meeting_minutes import PROTOCOL_VERSION, __version__
 from meeting_minutes.domain.policy import DEFAULT_EGRESS_POLICY
-from meeting_minutes.models.assets import check_speech_assets
+from meeting_minutes.models.assets import check_speech_assets, choose_speech_model
 from meeting_minutes.models.manifest import default_manifest_path, load_manifest, unshippable_reasons
 
 REPORT_SCHEMA = "meeting_minutes.doctor/1"
@@ -161,7 +161,8 @@ def _models(manifest_path: Path) -> dict[str, Any]:
     except ValueError:  # includes pydantic.ValidationError and malformed JSON
         return {"manifest_found": True, "error": MANIFEST_INVALID, "entries": []}
     try:
-        speech = check_speech_assets(manifest, manifest_path.parent)
+        # The installed speech model: the standard one, or the larger alternative alone.
+        speech = check_speech_assets(choose_speech_model(manifest, manifest_path.parent), manifest_path.parent)
     except (OSError, ValueError):
         speech = {"ready": False, "roles": [], "error": MANIFEST_UNREADABLE}
     return {

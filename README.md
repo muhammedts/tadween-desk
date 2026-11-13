@@ -57,7 +57,7 @@ and your PC's system audio.
 ## Privacy
 
 - **Live transcription runs on your PC, and the app does not save or upload meeting
-  audio.** Speech recognition (Qwen3-ASR 0.6B, run by a local
+  audio.** Speech recognition (Qwen3-ASR 0.6B or 1.7B, run by a local
   [llama.cpp](https://github.com/ggml-org/llama.cpp) server that only listens on
   `127.0.0.1`) and voice detection (Silero VAD) run on your CPU.
 - **No audio at rest.** The app does not write recordings or temporary audio files. Audio
@@ -81,7 +81,7 @@ and your PC's system audio.
 You need:
 
 - Windows 10 or 11, 64-bit, with about 3 GB of free disk space (the Python environment
-  and 1.1 GB of models);
+  and 1.1 GB of models), or about 4.5 GB with the larger speech model;
 - [Python 3.11](https://www.python.org/downloads/windows/) (64-bit) with the `py` launcher.
   The dependency locks are made for 3.11 only;
 - [Git](https://git-scm.com/download/win), or download the repository as a ZIP;
@@ -98,6 +98,7 @@ powershell -ExecutionPolicy Bypass -File app\scripts\bootstrap.ps1
 
 # 2. Speech models into app\models: shows the size (about 1.04 GB) and destination, asks,
 #    then checks every file's size and SHA-256. Files that already match are skipped.
+#    For the larger speech model, add -Model 1.7B (see "Choosing the speech model" below).
 .\"Install Models.cmd"
 
 # 3. Start the app
@@ -115,6 +116,27 @@ In the app, choose your microphone and the output you hear the meeting on, then 
 **Start**. Headphones give the best results: with speakers, your microphone also picks up
 the other participants.
 
+### Choosing the speech model
+
+Tadween Desk runs one of two sizes of the same speech model. Install the one you want:
+
+| Model | Install with | Download | Good for |
+|---|---|---|---|
+| Qwen3-ASR 0.6B (default) | `.\"Install Models.cmd"` | 1.02 GB | Most laptops. Faster, and uses less memory. |
+| Qwen3-ASR 1.7B | `.\"Install Models.cmd" -Model 1.7B` | 2.52 GB | Better accuracy, most of all for Arabic. About twice as slow on a CPU, and needs about 3 GB of free memory. |
+
+The app has no model setting: it uses the model that is installed, and shows its name in
+**Settings** and at the top of every saved transcript.
+
+- **Only one installed:** that one is used.
+- **Both installed** (`-Model Both`, or one after the other): the app uses 0.6B. To use
+  1.7B, delete the folder `app\models\stt\qwen3-asr-0.6b-q8` and start the app again.
+  `Install Models.cmd` brings the 0.6B model back whenever you want it.
+
+On a slower laptop the 1.7B model can fall behind in a busy meeting: the text then arrives
+later, and the transcript notes any stretch that had to be skipped. If that happens, go
+back to 0.6B.
+
 ### What `Install Models.cmd` installs
 
 All sources and versions are pinned in [`app/models/manifest.json`](app/models/manifest.json)
@@ -124,24 +146,28 @@ All sources and versions are pinned in [`app/models/manifest.json`](app/models/m
 | Asset | Source | Download | Licence |
 |---|---|---|---|
 | Qwen3-ASR 0.6B, Q8_0 GGUF + audio projector | [ggml-org/Qwen3-ASR-0.6B-GGUF](https://huggingface.co/ggml-org/Qwen3-ASR-0.6B-GGUF) @ `928ab95` | 1.02 GB | Apache-2.0 |
+| Qwen3-ASR 1.7B, Q8_0 GGUF + audio projector (only with `-Model 1.7B` or `-Model Both`) | [ggml-org/Qwen3-ASR-1.7B-GGUF](https://huggingface.co/ggml-org/Qwen3-ASR-1.7B-GGUF) @ `36a6786` | 2.52 GB | Apache-2.0 |
 | llama.cpp b11960 `llama-server`, Windows x64 CPU | [ggml-org/llama.cpp release b11960](https://github.com/ggml-org/llama.cpp/releases/tag/b11960) | 24 MB zip | MIT |
 | Silero VAD (ONNX) | [k2-fsa/sherpa-onnx `asr-models`](https://github.com/k2-fsa/sherpa-onnx/releases/tag/asr-models) | 0.6 MB | MIT |
 
 Options:
 
 ```powershell
+.\"Install Models.cmd" -Model 1.7B             # the larger speech model instead of 0.6B (or -Model Both)
 .\"Install Models.cmd" -DryRun                 # only show what is installed and what would be downloaded
 .\"Install Models.cmd" -From D:\my-downloads   # use files you downloaded yourself (checked the same way)
 ```
 
 **Placing the files by hand.** Download the files listed in the manifest (the `source_url`
-of each entry with role `stt`, `vad`, and the llama.cpp zip) into one folder, then run
-`Install Models.cmd -From <that folder>`. The installer verifies them and puts each in place.
+of each entry with role `stt` (or `stt-alt` for the 1.7B model), `vad`, and the llama.cpp
+zip) into one folder, then run `Install Models.cmd -From <that folder>` (with `-Model 1.7B`
+for the larger model). The installer verifies them and puts each in place.
 You can also copy them yourself. The app expects:
 
 ```text
 app\models\stt\qwen3-asr-0.6b-q8\Qwen3-ASR-0.6B-Q8_0.gguf
 app\models\stt\qwen3-asr-0.6b-q8\mmproj-Qwen3-ASR-0.6B-Q8_0.gguf
+   (or, for the 1.7B model: app\models\stt\qwen3-asr-1.7b-q8\Qwen3-ASR-1.7B-Q8_0.gguf and mmproj-Qwen3-ASR-1.7B-Q8_0.gguf)
 app\models\runtime\llama.cpp-b11960-win-cpu-x64\  (every file the manifest lists for this entry, from the zip)
 app\models\vad\silero_vad.onnx
 ```

@@ -129,7 +129,7 @@ def load_manifest(path: Path) -> ModelManifest:
     return ModelManifest.model_validate_json(path.read_bytes())
 
 
-ALT_STT_ROLE = "stt-alt"  # a speech model listed (and hash-pinned) but not used by the app
+ALT_STT_ROLE = "stt-alt"  # another pinned speech model; used when it is the only one installed
 
 
 def with_stt(manifest: ModelManifest, model_id: str) -> ModelManifest:
@@ -141,6 +141,12 @@ def with_stt(manifest: ModelManifest, model_id: str) -> ModelManifest:
     models = [m.model_copy(update={"role": "stt" if m.id == model_id else ALT_STT_ROLE})
               if m.role in ("stt", ALT_STT_ROLE) else m for m in manifest.models]
     return manifest.model_copy(update={"models": tuple(models) if isinstance(manifest.models, tuple) else models})
+
+
+def speech_models(manifest: ModelManifest) -> list[ModelEntry]:
+    """Every speech model the manifest pins: the standard one ("stt") first, then the
+    alternatives ("stt-alt")."""
+    return sorted((m for m in manifest.models if m.role in ("stt", ALT_STT_ROLE)), key=lambda m: m.role != "stt")
 
 
 def stt_label(entry: ModelEntry) -> str:

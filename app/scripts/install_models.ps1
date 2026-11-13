@@ -6,7 +6,8 @@
   Reads app\models\manifest.json (every file's source URL, pinned revision, byte size and
   SHA-256) and app\models\acquisition.json (the llama.cpp release zip the runtime files come
   from). Installs, into app\models:
-    - Qwen3-ASR 0.6B Q8_0 and its audio projector   (role stt, ~1.02 GB)
+    - Qwen3-ASR 0.6B Q8_0 and its audio projector   (role stt, ~1.02 GB), or with
+      -Model 1.7B the larger Qwen3-ASR 1.7B Q8_0    (role stt-alt, ~2.52 GB), or both
     - llama.cpp b11960 llama-server for Windows x64  (role stt-runtime, from a ~24 MB zip)
     - Silero VAD                                      (role vad, ~0.6 MB)
 
@@ -17,6 +18,11 @@
   match is deleted and reported. Nothing outside app\models is changed. When Windows has no
   Microsoft C++ runtime, its DLLs are copied next to llama-server from the app's own PySide6
   package. After setup the app runs offline.
+
+.PARAMETER Model
+  Which speech model to install: 0.6B (the default: smaller and faster), 1.7B (more accurate,
+  most of all for Arabic, but about twice as slow and about 2.9 GB of memory) or Both. The app
+  uses the one that is installed; with both installed it uses 0.6B.
 
 .PARAMETER From
   Folder holding files you downloaded yourself: either the files directly, the same layout as
@@ -32,10 +38,14 @@
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File app\scripts\install_models.ps1
 .EXAMPLE
+  powershell -ExecutionPolicy Bypass -File app\scripts\install_models.ps1 -Model 1.7B
+.EXAMPLE
   powershell -ExecutionPolicy Bypass -File app\scripts\install_models.ps1 -From D:\Downloads\tadween-models
 #>
 [CmdletBinding()]
 param(
+    [ValidateSet('0.6B', '1.7B', 'Both')]
+    [string]$Model = '0.6B',
     [string]$From = '',
     [switch]$DryRun,
     [switch]$Yes
@@ -95,8 +105,13 @@ function Invoke-Download([string]$Url, [string]$OutFile) {
 }
 
 # --- What should be installed ------------------------------------------------------------
-$roles = @($acquisition.default_roles)
-$entries = @($manifest.models | Where-Object { $roles -contains $_.role })
+# The speech model is chosen with -Model; the runtime and voice detection are always needed.
+$speechRoles = @('stt', 'stt-alt')
+$speechModels = @($manifest.models | Where-Object { $speechRoles -contains $_.role })
+$wanted = @($speechModels | Where-Object { $Model -eq 'Both' -or $_.upstream_checkpoint -like "*-$Model" })
+if ($wanted.Count -eq 0) { throw "The manifest lists no Qwen3-ASR $Model speech model." }
+$roles = @($acquisition.default_roles | Where-Object { $speechRoles -notcontains $_ })
+$entries = @($wanted) + @($manifest.models | Where-Object { $roles -contains $_.role })
 $items = @()
 foreach ($entry in $entries) {
     $folder = Join-Path $modelsDir ($entry.install_subdir -replace '/', '\')
@@ -309,4 +324,26 @@ if (-not $runtimeReady) {
     exit 1
 }
 Write-Host ("All {0} files verified (size and SHA-256). Tadween Desk can now transcribe offline." -f $items.Count)
+
+# Which speech model the app will use: the one that is installed; 0.6B when both are.
+function Test-ModelInstalled($entry) {
+    $folder = Join-Path $modelsDir ($entry.install_subdir -replace '/', '\')
+    foreach ($file in $entry.files) {
+        $path = Join-Path $folder $file.basename
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { return $false }
+        if ((Get-Item -LiteralPath $path).Length -ne $file.bytes) { return $false }
+    }
+    return $true
+}
+$present = @($speechModels | Sort-Object { $_.role -ne 'stt' } | Where-Object { Test-ModelInstalled $_ })
+if ($present.Count -gt 0) {
+    $name = { param($entry) ($entry.upstream_checkpoint -split '/')[-1] -replace 'Qwen3-ASR-', 'Qwen3-ASR ' }
+    Write-Host ("Speech model the app will use: {0}." -f (& $name $present[0]))
+    if ($present.Count -gt 1) {
+        $folder = Join-Path $modelsDir ($present[0].install_subdir -replace '/', '\')
+        Write-Host ("Both speech models are installed. To use {0} instead, delete the folder" -f (& $name $present[1]))
+        Write-Host ("  {0}" -f $folder)
+        Write-Host '("Install Models.cmd" brings it back).'
+    }
+}
 exit 0

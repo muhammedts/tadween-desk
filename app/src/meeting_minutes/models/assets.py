@@ -13,7 +13,7 @@ import hashlib
 from pathlib import Path
 from typing import Any
 
-from meeting_minutes.models.manifest import ModelEntry, ModelManifest
+from meeting_minutes.models.manifest import ModelEntry, ModelManifest, speech_models, with_stt
 
 V1_REQUIRED_ROLES = ("stt", "stt-runtime", "vad")
 LEGACY_WHISPER_ROLES = ("stt-legacy", "vad")  # Whisper small: the `transcribe-test` CLI command only
@@ -70,3 +70,22 @@ def check_speech_assets(manifest: ModelManifest, models_dir: Path, *, verify_has
                         required: tuple[str, ...] = V1_REQUIRED_ROLES) -> dict[str, Any]:
     roles = [check_role(manifest, models_dir, role, verify_hashes=verify_hashes) for role in required]
     return {"ready": all(r["ready"] for r in roles), "roles": roles}
+
+
+def installed(models_dir: Path, entry: ModelEntry) -> bool:
+    """Every file of `entry` is on disk with the manifest's size. No hashing here: the
+    speech server's first start checks SHA-256."""
+    try:
+        return bool(entry.files) and all(
+            (entry_dir(models_dir, entry) / f.basename).stat().st_size == f.bytes for f in entry.files)
+    except OSError:
+        return False
+
+
+def choose_speech_model(manifest: ModelManifest, models_dir: Path) -> ModelManifest:
+    """The manifest with the installed speech model as its "stt" entry: the standard model
+    when it is installed, otherwise an installed alternative (the larger Qwen3-ASR 1.7B).
+    With none installed the manifest is returned unchanged, and the app reports the
+    standard model as missing."""
+    chosen = next((m for m in speech_models(manifest) if installed(models_dir, m)), None)
+    return manifest if chosen is None or chosen.role == "stt" else with_stt(manifest, chosen.id)

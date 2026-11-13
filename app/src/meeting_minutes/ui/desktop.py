@@ -256,24 +256,31 @@ _SERVICE: Any = None  # the app's one local Qwen server (speech/qwen.py QwenServ
 _SERVICE_LOCK = threading.Lock()
 
 
+def _speech_manifest() -> tuple[Any, Path]:
+    """(manifest with the installed speech model as its "stt" entry, the models folder)."""
+    from meeting_minutes.models.assets import choose_speech_model
+    from meeting_minutes.models.manifest import default_manifest_path, load_manifest
+
+    path = default_manifest_path()
+    return choose_speech_model(load_manifest(path), path.parent), path.parent
+
+
 def _qwen_service() -> Any:
     global _SERVICE
     with _SERVICE_LOCK:
         if _SERVICE is None:
-            from meeting_minutes.models.manifest import default_manifest_path, load_manifest
             from meeting_minutes.speech.qwen import QwenService
 
-            path = default_manifest_path()
-            _SERVICE = QwenService(load_manifest(path), path.parent)
+            _SERVICE = QwenService(*_speech_manifest())
         return _SERVICE
 
 
 def _manifest_model_label() -> str:
-    """The bundled speech model's name for Settings (read from the manifest, no checks)."""
+    """The name of the speech model this run uses, for Settings (sizes only, no hashing)."""
     try:
-        from meeting_minutes.models.manifest import default_manifest_path, load_manifest, stt_label
+        from meeting_minutes.models.manifest import stt_label
 
-        manifest = load_manifest(default_manifest_path())
+        manifest, _ = _speech_manifest()
         return stt_label(next(m for m in manifest.models if m.role == "stt"))
     except Exception:  # noqa: BLE001 - a missing/unreadable manifest is reported elsewhere
         return "Qwen3-ASR"
