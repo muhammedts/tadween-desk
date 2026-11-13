@@ -602,18 +602,26 @@ if sys.platform == "win32":
         if not _STATE:
             return
         try:
-            sys.stderr.write("Tadween: Windows still holds an audio activation; ending without interpreter "
-                             "teardown.\n")
-        except Exception:  # noqa: BLE001
-            pass
-        logging = sys.modules.get("logging")
-        for flush in ((lambda: logging.shutdown()) if logging else None, sys.stdout.flush, sys.stderr.flush):
+            _last_words()
+        finally:  # nothing above may keep the process from ending here
+            _kernel32.TerminateProcess(_kernel32.GetCurrentProcess(), _EXIT["code"] & 0xFFFFFFFF)
+
+    def _last_words() -> None:
+        """Say why, and flush logging and output, before `_exit_guard` ends the process.
+        Best effort, one step at a time: a windowed start (pythonw, the CMD launcher) has
+        no stdout or stderr at all, and a stream can be closed or fail."""
+        steps: tuple[Callable[[], Any], ...] = (
+            lambda: sys.stderr.write("Tadween: Windows still holds an audio activation; ending without "
+                                     "interpreter teardown.\n"),
+            lambda: sys.modules["logging"].shutdown() if "logging" in sys.modules else None,
+            lambda: sys.stdout.flush(),
+            lambda: sys.stderr.flush(),
+        )
+        for step in steps:
             try:
-                if flush is not None:
-                    flush()
-            except Exception:  # noqa: BLE001
+                step()
+            except Exception:  # noqa: BLE001 - missing, closed or failing stream
                 pass
-        _kernel32.TerminateProcess(_kernel32.GetCurrentProcess(), _EXIT["code"] & 0xFFFFFFFF)
 
     atexit.register(_exit_guard)
 

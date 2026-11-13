@@ -412,6 +412,25 @@ def test_shutdown_never_lets_a_late_callback_into_python_teardown(delay: str) ->
 
 
 @win32
+@pytest.mark.parametrize("streams", ["none", "closed", "failing"])
+def test_shutdown_ends_the_process_without_usable_console_streams(streams: str, tmp_path: Path) -> None:
+    """The CMD launcher starts pythonw, which has no stdout or stderr. A missing, closed or
+    failing stream must not keep the guard from ending the process: with Windows still
+    holding a handler, normal teardown (the marker) never begins."""
+    marker = tmp_path / "teardown.txt"
+    proc = run_shutdown("never", 0.2, _tests_dir(), streams=streams, marker=marker)
+    assert proc.returncode == 7
+    assert not marker.exists()
+
+
+def test_the_marker_shows_teardown_when_nothing_is_pending(tmp_path: Path) -> None:
+    """The marker itself works: once Windows has let go, exit continues and writes it."""
+    marker = tmp_path / "teardown.txt"
+    proc = run_shutdown("0.3", 3.0, _tests_dir(), streams="none", marker=marker)
+    assert proc.returncode == 7
+    assert marker.read_text() == "normal teardown continued"
+
+
 def test_shutdown_continues_normally_when_windows_lets_go_within_the_grace_period() -> None:
     proc = run_shutdown("0.3", 3.0, _tests_dir())
     assert proc.returncode == 7, (proc.returncode, proc.stdout, proc.stderr)

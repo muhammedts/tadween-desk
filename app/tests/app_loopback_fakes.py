@@ -81,8 +81,13 @@ class SlowWindows:
 
 
 SHUTDOWN_SCRIPT = r"""
-import atexit, sys
-atexit.register(lambda: print("normal teardown continued", flush=True))  # runs after the guard
+import atexit, pathlib, sys
+streams, marker = sys.argv[4], pathlib.Path(sys.argv[5])
+def teardown_continued():  # registered first, so it runs after the guard
+    marker.write_text("normal teardown continued")
+    if streams == "console":
+        print("normal teardown continued", flush=True)
+atexit.register(teardown_continued)
 sys.path.insert(0, sys.argv[3])
 from meeting_minutes.capture import app_loopback as al
 from meeting_minutes.capture.base import DeviceUnavailable
@@ -95,12 +100,25 @@ try:
 except DeviceUnavailable as exc:
     print("start gave up:", exc, flush=True)
 al.note_exit_code(7)
+class Failing:
+    def write(self, text): raise OSError("stream failed")
+    def flush(self): raise OSError("stream failed")
+if streams == "none":  # a windowed start (pythonw): no console streams at all
+    sys.stdout = sys.stderr = None
+elif streams == "closed":
+    sys.stdout.close(); sys.stderr.close()
+elif streams == "failing":
+    sys.stdout = sys.stderr = Failing()
 raise SystemExit(7)
 """
 
 
-def run_shutdown(delay: str, grace: float, tests_dir: str):
+def run_shutdown(delay: str, grace: float, tests_dir: str, *, streams: str = "console", marker: Any = None):
+    """Run the shutdown script in its own process. `streams`: "console", or what the
+    script does to stdout and stderr just before exiting ("none", "closed", "failing").
+    `marker` is a file the script writes only if normal teardown continued."""
+    import os
     import subprocess
 
-    return subprocess.run([sys.executable, "-c", SHUTDOWN_SCRIPT, delay, str(grace), tests_dir],
-                          capture_output=True, text=True, timeout=60)
+    return subprocess.run([sys.executable, "-c", SHUTDOWN_SCRIPT, delay, str(grace), tests_dir, streams,
+                           str(marker or os.devnull)], capture_output=True, text=True, timeout=60)
