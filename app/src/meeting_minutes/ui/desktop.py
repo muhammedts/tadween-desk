@@ -104,6 +104,7 @@ from meeting_minutes.ui.widgets import (
     AlertArea,
     Banner,
     Card,
+    ComboBox,
     EmptyState,
     Notice,
     ReadinessItem,
@@ -748,21 +749,21 @@ class MainWindow(QMainWindow):
         refresh = button(C.REFRESH, "refresh", size="compact")
         refresh.clicked.connect(lambda: self.refresh_devices(announce_result=True))
         sources.title_row.addWidget(refresh)
-        self.mic_combo = QComboBox()
+        self.mic_combo = ComboBox()
         # Computer sound: one application, everything on an output device, or
         # none. The output-device and application pickers hold real choices only; "None" is
         # the third choice, so an empty picker never starts capture silently.
-        self.sound_mode = QComboBox()
+        self.sound_mode = ComboBox()
         for mode, text in C.SOUND_MODES:
             self.sound_mode.addItem(text, mode)
         self.sound_mode.setCurrentIndex(self.sound_mode.findData("device"))  # today's behaviour
-        self.system_combo = QComboBox()
+        self.system_combo = ComboBox()
         self.system_combo.setPlaceholderText(C.OUTPUT_PLACEHOLDER)
-        self.app_combo = QComboBox()
+        self.app_combo = ComboBox()
         self.app_combo.setPlaceholderText(C.APP_PLACEHOLDER)
         self._app_names: dict[str, str] = {}
         self._session_app = False
-        self.language_combo = QComboBox()
+        self.language_combo = ComboBox()
         for combo in (self.mic_combo, self.sound_mode, self.system_combo, self.app_combo, self.language_combo):
             # Long device names must not widen the window; the open list shows them in full.
             combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
@@ -2817,7 +2818,7 @@ class MainWindow(QMainWindow):
         self.retention_current = label("")
         keep.box.addWidget(self.retention_current)
         line = QHBoxLayout()
-        self.retention_combo = QComboBox()
+        self.retention_combo = ComboBox()
         self.retention_combo.setAccessibleName("History retention")
         for _, text in retention.CHOICES:
             self.retention_combo.addItem(text)

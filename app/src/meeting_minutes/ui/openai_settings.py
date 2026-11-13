@@ -13,7 +13,6 @@ from collections.abc import Callable
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -26,6 +25,7 @@ from meeting_minutes.minutes.credentials import CredentialError
 from meeting_minutes.minutes.service import LANGUAGES, MinutesService
 from meeting_minutes.storage.store import StorageError
 from meeting_minutes.ui.minutes_view import Banner, _button, _label, _set_prop, default_confirm
+from meeting_minutes.ui.widgets import ComboBox
 
 INTRO = ("Optional. Used only when you press Generate MoM on a saved meeting. Transcription never uses OpenAI and "
          "works without a key. API charges from your OpenAI account apply to each generation.")
@@ -146,7 +146,7 @@ class OpenAISettingsSection(QWidget):
         layout.addWidget(_label(COST_HELP, "help"))
         language_row = QHBoxLayout()
         language_row.addWidget(_label("Minutes language", wrap=False))
-        self.language_combo = QComboBox()
+        self.language_combo = ComboBox()
         self.language_combo.setAccessibleName("Minutes language")
         for code, name in LANGUAGES.items():
             self.language_combo.addItem(name, code)

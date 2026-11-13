@@ -22,8 +22,6 @@ from PySide6.QtWidgets import (
     QAbstractItemView,
     QButtonGroup,
     QCheckBox,
-    QComboBox,
-    QDateEdit,
     QDialog,
     QDialogButtonBox,
     QFileDialog,
@@ -63,6 +61,7 @@ from meeting_minutes.minutes.render import (
 from meeting_minutes.minutes.provider import CostEstimate
 from meeting_minutes.minutes.service import GenerationJob, MinutesDocument, MinutesService, MinutesUnavailable
 from meeting_minutes.storage.store import MinutesItemRow, MinutesRejected, StorageError
+from meeting_minutes.ui.widgets import ComboBox, DateEdit
 from meeting_minutes.ui.wording import is_rtl, local_time
 
 GENERATE_NOTICE = ("Sends this meeting's saved transcript and related details to OpenAI: title, date, time zone, "
@@ -297,7 +296,7 @@ class ItemEditDialog(QDialog):
         self.text.setAccessibleName("Text")
         form.addRow("Title" if kind == "topic" else "Text", self.text)
         self.detail = QPlainTextEdit((item.detail or "") if item else "")
-        self.status = QComboBox()
+        self.status = ComboBox()
         for value, label in DECISION_LABEL.items():
             self.status.addItem(label, value)
         self.owner = QLineEdit((item.owner or "") if item else "")
@@ -352,7 +351,7 @@ class ActionEditDialog(QDialog):
         self.owner.setAccessibleName("Owner")
         form.addRow("Owner", self.owner)
         self.no_due = QCheckBox("Not specified")
-        self.due = QDateEdit()
+        self.due = DateEdit()
         self.due.setCalendarPopup(True)
         self.due.setDisplayFormat("yyyy-MM-dd")
         self.due.setAccessibleName("Due date")
@@ -372,7 +371,7 @@ class ActionEditDialog(QDialog):
         self.phrase = _label(f"Said in the meeting: “{phrase}”" if phrase else "Leave empty if not specified.",
                              "help")
         form.addRow("", self.phrase)
-        self.commitment = QComboBox()
+        self.commitment = ComboBox()
         for value, label in COMMIT_CHOICES:
             self.commitment.addItem(label, value)
         self.commitment.setCurrentIndex(max(0, self.commitment.findData(item.commitment if item else "uncertain")))
@@ -520,7 +519,7 @@ class MinutesWorkspace(QObject):
         strip = QHBoxLayout()
         self.state_chip = QLabel("")
         self.state_chip.setProperty("chip", "neutral")
-        self.version_combo = QComboBox()
+        self.version_combo = ComboBox()
         self.version_combo.setAccessibleName("Minutes version")
         self.version_combo.activated.connect(self._version_chosen)
         self.edit_button = _button("Edit")

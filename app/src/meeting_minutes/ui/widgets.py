@@ -9,8 +9,10 @@ from collections.abc import Callable, Sequence
 from typing import Any
 
 from PySide6.QtCore import QSize, Qt, QTimer
-from PySide6.QtGui import QAccessible, QAccessibleEvent
+from PySide6.QtGui import QAccessible, QAccessibleEvent, QWheelEvent
 from PySide6.QtWidgets import (
+    QComboBox,
+    QDateEdit,
     QFormLayout,
     QFrame,
     QHBoxLayout,
@@ -92,6 +94,30 @@ def link_button(text: str, action: Callable[[], Any]) -> QToolButton:
     widget.setAccessibleName(text)
     widget.clicked.connect(lambda: action())
     return widget
+
+
+class ComboBox(QComboBox):
+    """A drop-down the mouse wheel cannot change. Scrolling a page with the pointer over
+    it scrolls the page; the choice changes only by opening the list, or from the keyboard.
+    The open list still scrolls with the wheel."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)  # the wheel does not move focus here either
+
+    def wheelEvent(self, event: QWheelEvent) -> None:  # noqa: N802 - Qt override
+        event.ignore()  # left for the scrolling page behind
+
+
+class DateEdit(QDateEdit):
+    """A date field the mouse wheel cannot change, for the same reason as `ComboBox`."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+    def wheelEvent(self, event: QWheelEvent) -> None:  # noqa: N802 - Qt override
+        event.ignore()
 
 
 def chip(text: str = "", kind: str = "neutral") -> QLabel:
